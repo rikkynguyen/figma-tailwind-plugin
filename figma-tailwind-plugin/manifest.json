@@ -1,0 +1,8 @@
+{
+  "name": "Export Variables to Tailwind",
+  "id": "export-to-tailwind",
+  "api": "1.0.0",
+  "main": "code.ts",
+  "ui": "ui.html",
+  "editorType": ["figma"]
+}
