@@ -6,41 +6,30 @@ figma.ui.onmessage = async function (msg) {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
     const allVariables = await figma.variables.getLocalVariablesAsync();
 
-    const selectedCollections = collections.filter(function (c) {
-      return selectedIds.includes(c.id);
-    });
-
-    const selectedVars = allVariables.filter(function (v) {
-      return selectedIds.includes(v.variableCollectionId);
-    });
+    const selectedCollections = collections.filter(c => selectedIds.includes(c.id));
+    const selectedVars = allVariables.filter(v => selectedIds.includes(v.variableCollectionId));
 
     const tokensByCollection = {};
 
-    for (var i = 0; i < selectedCollections.length; i++) {
-      var collection = selectedCollections[i];
-      var collectionName = collection.name || "Unnamed";
-
+    for (const collection of selectedCollections) {
+      const collectionName = collection.name || "Unnamed";
       tokensByCollection[collectionName] = {};
 
-      var collectionVars = selectedVars.filter(function (v) {
-        return v.variableCollectionId === collection.id;
-      });
+      const collectionVars = selectedVars.filter(v => v.variableCollectionId === collection.id);
 
-      for (var j = 0; j < collectionVars.length; j++) {
-        var variable = collectionVars[j];
-        var originalName = variable.name;
-        var key = originalName.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
+      for (const variable of collectionVars) {
+        const originalName = variable.name;
+        const key = originalName.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
 
-        var group = "custom";
-
+        let group = "custom";
         if (variable.resolvedType === 'COLOR') {
           group = "color";
         } else if (variable.resolvedType === 'FLOAT') {
           group = collectionName.toLowerCase().includes("typography") ? "text" : "spacing";
         }
 
-        var modeIds = Object.keys(variable.valuesByMode);
-        var val = modeIds.length > 0 ? variable.valuesByMode[modeIds[0]] : null;
+        const modeIds = Object.keys(variable.valuesByMode);
+        const val = modeIds.length > 0 ? variable.valuesByMode[modeIds[0]] : null;
 
         if (!tokensByCollection[collectionName][group]) {
           tokensByCollection[collectionName][group] = [];
@@ -71,60 +60,52 @@ figma.ui.onmessage = async function (msg) {
 @theme {
 `.trim());
 
-    for (var collectionName in tokensByCollection) {
-      var groups = tokensByCollection[collectionName];
+    for (const collectionName in tokensByCollection) {
+      const groups = tokensByCollection[collectionName];
 
-      for (var groupName in groups) {
-        lines.push("  /* Group: " + groupName + " (" + collectionName + ") */");
+      for (const groupName in groups) {
+        lines.push(`  /* Group: ${groupName} (${collectionName}) */`);
 
-        var items = groups[groupName];
+        const items = groups[groupName];
 
-        for (var i = 0; i < items.length; i++) {
-          var token = items[i];
-
-          // Use original full name path converted to --token-name
-          var varKey = token.name.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
-
-          // Add --color- prefix ONLY for Colors collection
-          var varName = (collectionName.toLowerCase() === 'colors')
-            ? "--color-" + varKey
-            : "--" + varKey;
+        for (const token of items) {
+          const varKey = token.name.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase();
+          const varName = token.resolvedType === "COLOR" ? `--color-${varKey}` : `--${varKey}`;
 
           if (token.isAlias) {
-            var aliasVar = allVariables.find(function (v) {
-              return v.id === token.rawValue.id;
-            });
-            var aliasName = aliasVar ? aliasVar.name.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase() : "alias";
-            var colorCollection = null;
-            for (var k = 0; k < collections.length; k++) {
-              if (collections[k].name && collections[k].name.toLowerCase() === "colors") {
-                colorCollection = collections[k];
-                break;
-              }
-            }
-            var aliasPrefix = aliasVar && colorCollection && aliasVar.variableCollectionId === colorCollection.id ? "color-" : "";
-
-            lines.push("  " + varName + ": var(--" + aliasPrefix + aliasName + ");");
+            const aliasVar = allVariables.find(v => v.id === token.rawValue.id);
+            const aliasName = aliasVar
+              ? aliasVar.name.replace(/\//g, '-').replace(/\s+/g, '-').toLowerCase()
+              : "alias";
+            const aliasPrefix = aliasVar && aliasVar.resolvedType === "COLOR" ? "color-" : "";
+            lines.push(`  ${varName}: var(--${aliasPrefix}${aliasName});`);
           } else if (token.resolvedType === 'COLOR') {
-            var val = token.rawValue;
+            const val = token.rawValue;
             if (val && val.r !== undefined) {
-              var r = Math.round(val.r * 255).toString(16).padStart(2, '0');
-              var g = Math.round(val.g * 255).toString(16).padStart(2, '0');
-              var b = Math.round(val.b * 255).toString(16).padStart(2, '0');
-              var a = val.a !== undefined ? val.a : 1;
-
-              if (a === 1) {
-                lines.push("  " + varName + ": #" + r + g + b + ";");
-              } else {
-                lines.push("  " + varName + ": #" + r + g + b + Math.round(a * 255).toString(16).padStart(2, '0') + ";");
-              }
+              const r = Math.round(val.r * 255).toString(16).padStart(2, '0');
+              const g = Math.round(val.g * 255).toString(16).padStart(2, '0');
+              const b = Math.round(val.b * 255).toString(16).padStart(2, '0');
+              const a = val.a !== undefined ? val.a : 1;
+              const hex = a === 1 ? `#${r}${g}${b}` : `#${r}${g}${b}${Math.round(a * 255).toString(16).padStart(2, '0')}`;
+              lines.push(`  ${varName}: ${hex};`);
             }
           } else if (token.resolvedType === 'FLOAT') {
-            var px = parseFloat(token.rawValue);
-            var rem = (px / 16).toFixed(4).replace(/\.0+$/, '').replace(/0+$/, '');
-            lines.push("  " + varName + ": " + rem + "rem;");
+            const raw = token.rawValue;
+            const isFontWeight = token.name.toLowerCase().includes("weight");
+            if (typeof raw === 'number' || (typeof raw === 'string' && /^\d+(\.\d+)?$/.test(raw))) {
+              const px = parseFloat(raw);
+              if (isFontWeight) {
+                lines.push(`  ${varName}: ${px};`);
+              } else {
+                const rem = px / 16;
+                const value = rem === 0 ? '0rem' : rem.toFixed(4).replace(/\.0+$/, '').replace(/0+$/, '') + 'rem';
+                lines.push(`  ${varName}: ${value};`);
+              }
+            } else {
+              lines.push(`  ${varName}: ${token.rawValue};`);
+            }
           } else {
-            lines.push("  " + varName + ": " + token.rawValue + ";");
+            lines.push(`  ${varName}: ${token.rawValue};`);
           }
         }
 
@@ -136,7 +117,7 @@ figma.ui.onmessage = async function (msg) {
 
     lines.push("}");
 
-    var cssContent = lines.join("\n");
+    const cssContent = lines.join("\n");
 
     figma.ui.postMessage({
       type: "download-css",
@@ -144,23 +125,19 @@ figma.ui.onmessage = async function (msg) {
     });
   } else {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
-    const formatted = collections.map(function (col) {
-      return {
-        id: col.id,
-        name: col.name || "(Unnamed Collection)"
-      };
-    });
+    const formatted = collections.map(col => ({
+      id: col.id,
+      name: col.name || "(Unnamed Collection)"
+    }));
     figma.ui.postMessage({ collections: formatted });
   }
 };
 
 (async function () {
   const collections = await figma.variables.getLocalVariableCollectionsAsync();
-  const formatted = collections.map(function (col) {
-    return {
-      id: col.id,
-      name: col.name || "(Unnamed Collection)"
-    };
-  });
+  const formatted = collections.map(col => ({
+    id: col.id,
+    name: col.name || "(Unnamed Collection)"
+  }));
   figma.ui.postMessage({ collections: formatted });
 })();
