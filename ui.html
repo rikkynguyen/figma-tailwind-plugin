@@ -46,27 +46,19 @@
       flex-direction: column;
       gap: 0.5rem;
     }
-
-    .collection-item {
-      background-color: var(--color-dark-2);
-      padding: 0.5rem 0.25rem;
-      border-radius: 0.25rem;
-    }
-
-    .collection-item:hover {
-      background-color: var(--color-dark-1);
-    }
-
-    label {
+    
+    .collection-item label {
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.25rem 0.5rem;
+      padding: 0.75rem 0.75rem;
+      background-color: var(--color-dark-2);
+      border-radius: 0.25rem;
     }
 
-    input[type="checkbox"] {
-      transform: scale(1.2);
+    .collection-item label:hover {
+      background-color: var(--color-dark-1);
     }
 
     button {
@@ -86,6 +78,7 @@
 
     input[type="checkbox"] {
       border: none;
+      transform: scale(1.5);
       border-radius: 0.025rem;
     }
 
