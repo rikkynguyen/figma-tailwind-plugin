@@ -5,99 +5,136 @@
   <meta charset="UTF-8" />
   <style>
     :root {
-      --color-primary: #ff7bbf;
-      --color-secondary: #964ec2;
-      --color-dark-1: #7a3a5b;
-      --color-dark-2: #4c2538;
-      --color-bg: #1a1a2e;
+      --bg: #1e1e2f;
+      --surface: #2b2b3c;
+      --border: #3f3f4f;
+      --text: #e5e5e5;
+      --muted: #aaa;
+      --accent: #7f5af0;
+      --accent-hover: #9c7fff;
+      --radius: 10px;
     }
+
     body {
-      font-family: sans-serif;
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       margin: 0;
-      background-color: var(--color-bg);
-      color: white;
-    }
-
-    h3 {
-      margin: 8px 0;
-      color: var(--color-primary);
-    }
-
-    .header {
-      padding: 0.5rem 1rem;
-    }
-
-    .header small {
-      display: block;
-      color: gainsboro;
-      font-size: 0.875rem;
+      padding: 0;
+      font-size: 14px;
     }
 
     .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 1rem;
+      padding: 24px;
+      max-width: 400px;
+      margin: auto;
+    }
+
+    h2 {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    p {
+      margin-top: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
     }
 
     .collection-list {
-      max-height: 300px;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 12px;
+      max-height: 300px;
+      overflow-y: auto;
     }
-    
+
     .collection-item label {
-      cursor: pointer;
       display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem 0.75rem;
-      background-color: var(--color-dark-2);
-      border-radius: 0.25rem;
+      background-color: #3a3a4d;
+      border-radius: var(--radius);
+      padding: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s ease;
     }
 
     .collection-item label:hover {
-      background-color: var(--color-dark-1);
+      background-color: #4a4a5e;
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: #444;
+      border-radius: 9999px;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+      transition: background 0.3s ease;
+    }
+
+    .toggle:checked {
+      background-color: var(--accent);
+    }
+
+    .toggle::before {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: white;
+      border-radius: 9999px;
+      transition: transform 0.3s ease;
+    }
+
+    .toggle:checked::before {
+      transform: translateX(16px);
     }
 
     button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      background: var(--color-primary);
-      color: black;
+      width: 100%;
+      background-color: var(--accent);
+      color: white;
       border: none;
-      border-radius: 4px;
+      padding: 12px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: var(--radius);
       cursor: pointer;
+      transition: background-color 0.2s ease;
     }
 
     button:hover {
-      background: var(--color-secondary);
-      color: white;
-    }
-
-    input[type="checkbox"] {
-      border: none;
-      transform: scale(1.5);
-      border-radius: 0.025rem;
-    }
-
-    input[type="checkbox"]:checked {
-      accent-color: var(--color-primary);
+      background-color: var(--accent-hover);
     }
   </style>
 </head>
 
 <body>
-  <div class="header">
-    <h3>Figma Tailwind CSS Plugin</h3>
-    <small>Select variable collections to export to Tailwind CSS.</small>
-  </div>
   <div class="container">
-    <div class="collection-list" id="collections"></div>
-  </div>
-  <div class="container">
-    <button id="export">Export to Tailwind CSS</button>
+    <h2>Export Tailwind CSS</h2>
+    <p>Select the variable collections you want to export:</p>
+
+    <div class="card">
+      <div class="collection-list" id="collections"></div>
+    </div>
+
+    <button id="export">⬇ Export to CSS</button>
   </div>
 
   <script>
@@ -114,15 +151,17 @@
           div.className = "collection-item";
 
           const label = document.createElement("label");
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.value = col.id;
-          checkbox.onchange = () => {
-            checkbox.checked ? selected.add(col.id) : selected.delete(col.id);
+          label.textContent = col.name;
+
+          const toggle = document.createElement("input");
+          toggle.type = "checkbox";
+          toggle.className = "toggle";
+          toggle.value = col.id;
+          toggle.onchange = () => {
+            toggle.checked ? selected.add(col.id) : selected.delete(col.id);
           };
 
-          label.appendChild(checkbox);
-          label.appendChild(document.createTextNode(col.name));
+          label.appendChild(toggle);
           div.appendChild(label);
           container.appendChild(div);
         });
@@ -133,22 +172,12 @@
           type: "text/css"
         });
         const url = URL.createObjectURL(blob);
-        document.body.innerHTML = `
-          <div style="padding: 1em; font-family: sans-serif;">
-            <h2>Tailwind CSS Theme</h2>
-            <p>Download your CSS file below:</p>
-            <a href="${url}" download="tailwind-theme.css" style="
-              font-weight: bold;
-              display: inline-block;
-              margin-top: 1em;
-              padding: 0.5rem 1rem;
-              background: #22c55e;
-              color: white;
-              border-radius: 4px;
-              text-decoration: none;
-            ">⬇️ Download tailwind-theme.css</a>
-          </div>
-        `;
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "tailwind-theme.css";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
       }
     };
 
@@ -160,6 +189,21 @@
         }
       }, "*");
     };
+
+    // resize fix
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        const height = document.documentElement.scrollHeight;
+        const width = 400;
+        parent.postMessage({
+          pluginMessage: {
+            type: "resize",
+            width,
+            height
+          }
+        }, "*");
+      }, 50);
+    });
   </script>
 </body>
 
