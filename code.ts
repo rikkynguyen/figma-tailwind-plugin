@@ -1,3 +1,7 @@
+// Debug: Log Figma plugin environment and variables API
+console.log("[Figma Plugin] figma.variables:", figma.variables);
+console.log("[Figma Plugin] figma.editorType:", figma.editorType);
+console.log("[Figma Plugin] figma.apiVersion:", figma.apiVersion);
 figma.showUI(__html__, { width: 420, height: 500 });
 
 figma.ui.onmessage = async function (msg) {
@@ -90,11 +94,20 @@ figma.ui.onmessage = async function (msg) {
 }
 
 
+
   if (msg.type === "export-json") {
+    // If selected is provided, filter collections and variables
+    const selectedIds = msg.selected || [];
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
     const variables = await figma.variables.getLocalVariablesAsync();
+    let filteredCollections = collections;
+    let filteredVariables = variables;
+    if (Array.isArray(selectedIds) && selectedIds.length > 0) {
+      filteredCollections = collections.filter(c => selectedIds.includes(c.id));
+      filteredVariables = variables.filter(v => selectedIds.includes(v.variableCollectionId));
+    }
     const data = {
-      collections: collections.map(function (c) {
+      collections: filteredCollections.map(function (c) {
         return {
           id: c.id,
           name: c.name,
@@ -102,7 +115,7 @@ figma.ui.onmessage = async function (msg) {
           modes: c.modes
         };
       }),
-      variables: variables.map(function (v) {
+      variables: filteredVariables.map(function (v) {
         return {
           id: v.id,
           name: v.name,
@@ -118,33 +131,100 @@ figma.ui.onmessage = async function (msg) {
   if (msg.type === "import-json") {
     try {
       const json = JSON.parse(msg.content);
-      const collectionMap = {};
+      if (!json || !Array.isArray(json.collections) || !Array.isArray(json.variables)) {
+        figma.notify("Invalid JSON: missing collections or variables array.");
+        figma.ui.postMessage({ type: "import-feedback", message: "Invalid JSON: missing collections or variables array.", error: true });
+        return;
+      }
+
+      if (!figma.variables || typeof figma.variables.createVariableCollection !== 'function') {
+        figma.notify("Figma Variables API not available in this context.");
+        figma.ui.postMessage({ type: "import-feedback", message: "Figma Variables API not available in this context.", error: true });
+        return;
+      }
+      const existingCollections = figma.variables.getLocalVariableCollections();
+      const collectionMap = {}; // old collection id -> new collection id
+      const modeIdMap = {}; // old collection id -> { oldModeId: newModeId }
 
       for (var i = 0; i < json.collections.length; i++) {
         const col = json.collections[i];
-        const newCol = await figma.variables.createVariableCollectionAsync(col.name);
+        if (!col.name) continue;
+        // Avoid duplicate collection names
+        let newCol;
+        const already = existingCollections.find(c => c.name === col.name);
+        if (already) {
+          newCol = already;
+        } else {
+          newCol = figma.variables.createVariableCollection(col.name);
+        }
         collectionMap[col.id] = newCol.id;
+        // Map old mode IDs to new mode IDs by order
+        if (Array.isArray(col.modes) && Array.isArray(newCol.modes)) {
+          const map = {};
+          for (let k = 0; k < col.modes.length && k < newCol.modes.length; k++) {
+            map[col.modes[k].modeId] = newCol.modes[k].modeId;
+          }
+          modeIdMap[col.id] = map;
+        } else {
+          modeIdMap[col.id] = {};
+        }
       }
 
+
+      // First pass: create all variables and store by old id
+      const variableMap = {}; // old variable id -> new variable
       for (var j = 0; j < json.variables.length; j++) {
         const v = json.variables[j];
-        const collectionId = collectionMap[v.variableCollectionId];
+        const oldCollectionId = v.variableCollectionId;
+        const collectionId = collectionMap[oldCollectionId];
+        if (!collectionId || !v.name) continue;
+        // Avoid duplicate variable names in the same collection
+        const existingVars = figma.variables.getLocalVariables();
+        const alreadyVar = existingVars.find(x => x.name === v.name && x.variableCollectionId === collectionId);
+        let newVar;
+        if (alreadyVar) {
+          newVar = alreadyVar;
+        } else {
+          newVar = figma.variables.createVariable(v.name, collectionId, v.resolvedType);
+        }
+        variableMap[v.id] = newVar;
+      }
 
-        if (!collectionId) continue;
-
-        const newVar = await figma.variables.createVariableAsync(v.name, collectionId, v.resolvedType);
-
+      // Second pass: set values (including aliases)
+      for (var j = 0; j < json.variables.length; j++) {
+        const v = json.variables[j];
+        const oldCollectionId = v.variableCollectionId;
+        const collectionId = collectionMap[oldCollectionId];
+        if (!collectionId || !v.name) continue;
+        const newVar = variableMap[v.id];
         const modes = Object.keys(v.valuesByMode || {});
         for (var m = 0; m < modes.length; m++) {
-          const modeId = modes[m];
-          await newVar.setValueForMode(modeId, v.valuesByMode[modeId]);
+          const oldModeId = modes[m];
+          const newModeId = modeIdMap[oldCollectionId] && modeIdMap[oldCollectionId][oldModeId];
+          if (newModeId) {
+            let value = v.valuesByMode[oldModeId];
+            // If value is a VARIABLE_ALIAS, remap the id
+            if (value && typeof value === 'object' && value.type === 'VARIABLE_ALIAS' && value.id) {
+              if (variableMap[value.id]) {
+                value = Object.assign({}, value, { id: variableMap[value.id].id });
+              } else {
+                // If alias target not found, skip
+                continue;
+              }
+            }
+            newVar.setValueForMode(newModeId, value);
+          }
         }
       }
 
       figma.notify("Figma variables imported successfully.");
+      figma.ui.postMessage({ type: "import-feedback", message: "Figma variables imported successfully.", error: false });
+      // Trigger UI to refresh collections
+      figma.ui.postMessage({ type: "refresh-collections" });
     } catch (e) {
       console.error(e);
-      figma.notify("Failed to import JSON.");
+      figma.notify("Failed to import JSON. " + (e && e.message ? e.message : ""));
+      figma.ui.postMessage({ type: "import-feedback", message: "Failed to import JSON. " + (e && e.message ? e.message : ""), error: true });
     }
   }
 };

@@ -34,16 +34,10 @@
       margin: 0;
       padding: 1rem;
       font-size: 14px;
+      line-height: 1.5;
       min-width: 300px;
       max-width: 100%;
       box-sizing: border-box;
-    }
-
-    h3 {
-      margin: 0 0 0.5rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
     }
 
     .card {
@@ -69,6 +63,7 @@
       box-sizing: border-box;
       background: var(--color-collection-bg);
       display: flex;
+      justify-content: space-between;
       align-items: center;
       gap: 0.5rem;
       padding: 0.5rem 0.75rem;
@@ -157,16 +152,6 @@
       background: rgba(255, 255, 255, 0.03);
     }
 
-    button::after {
-      content: '⬇';
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 16px;
-      opacity: 0.7;
-    }
-
     .inline-toggle {
       display: flex;
       align-items: center;
@@ -182,6 +167,56 @@
       align-items: center;
       gap: 0.25rem;
     }
+
+    .tab {
+      display: none;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    .tab-nav {
+      display: flex;
+      margin-bottom: 1rem;
+      padding: 0.25rem;
+      background-color: var(--color-surface);
+      border-radius: 4px;
+      gap: 0.25rem;
+    }
+
+    .tab-button {
+      font-weight: 600;
+      border: none;
+      background: none;
+      color: var(--color-muted);
+      cursor: pointer;
+      padding: 0.75rem 1rem;
+      border-radius: 4px;
+      transition: background 0.2s, color 0.2s;
+      align-items: center;
+    }
+
+    .tab-button.active {
+      color: var(--color-text);
+      background-color: var(--color-accent);
+    }
+
+    .drop-area {
+      padding: 1.5rem;
+      color: var(--color-muted);
+      font-size: 13px;
+      border: 2px dashed var(--color-border);
+      border-radius: 6px;
+      cursor: pointer;
+      background: rgba(255, 255, 255, 0.01);
+      text-align: center;
+    }
+
+    @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
 
@@ -189,9 +224,6 @@
   <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
     <div>
       <h2 style="margin: 4px 0; font-weight: 600; font-size: 18px;">Figma Variable Toolkit</h2>
-      <p style="margin: 0 0; font-weight: 400; font-size: 14px; color: var(--color-muted);">
-        Select collections to export
-      </p>
     </div>
     <label class="theme-toggle inline-toggle">
       <span class="small-label">🌙 Dark Theme</span>
@@ -202,137 +234,272 @@
     </label>
   </div>
 
-  <div class="card">
-    <label class="inline-toggle" style="padding: 0 1.5rem;">
-      <span class="toggle-wrapper">
-        <input type="checkbox" id="selectAll">
-        <span class="toggle-slider"></span>
-      </span>
-      <span>Select All</span>
-    </label>
-    <div id="collections" class="collection-list"></div>
-  </div>
+  <div class="tabs">
+    <div class="tab-nav">
+      <button id="tab-export" class="tab-button">Export Variables</button>
+      <button id="tab-import" class="tab-button">Import Variables</button>
+    </div>
+    <div class="tab active" id="export-tab">
+      <div class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <p style="margin: 0 0.75rem; font-weight: 400; font-size: 14px; color: var(--color-muted);">
+            Select collections to export
+          </p>
+          <label class="inline-toggle" style="padding: 0 1.5rem;">
+            <span>Select All</span>
+            <span class="toggle-wrapper">
+              <input type="checkbox" id="selectAll">
+              <span class="toggle-slider"></span>
+            </span>
+          </label>
+        </div>
+        <div id="collections" class="collection-list"></div>
+      </div>
 
-  <div class="actions">
-    <button id="export-css">
-      <div style="font-weight: 600;">🌀 Tailwind v4 CSS</div>
-      <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export to Tailwind v4-compatible CSS
-        file</div>
-    </button>
-    <button id="export-json">
-      <div style="font-weight: 600;">📦 Figma JSON</div>
-      <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export Figma variables to JSON for
-        import</div>
-    </button>
-  </div>
+      <div class="actions">
+        <button id="export-css">
+          <div style="font-weight: 600;">🌀 Tailwind v4 CSS</div>
+          <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export to Tailwind v4-compatible
+            CSS file</div>
+        </button>
+        <button id="export-json">
+          <div style="font-weight: 600;">📦 Figma JSON</div>
+          <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export Figma variables to JSON for
+            import</div>
+        </button>
+      </div>
 
-  <script>
-    const selected = new Set();
+    </div>
 
-    window.onmessage = (event) => {
-      const msg = event.data.pluginMessage;
-      if (msg.type === "collections") {
-        const container = document.getElementById("collections");
-        container.innerHTML = "";
+    <div class="tab" id="import-tab">
+      <div class="card" style="padding: 1rem;">
+        <p style="margin: 0; color: var(--color-muted);">
+          Import Figma JSON file to create variables
+        </p>
+        <div id="import-drop-area" class="drop-area">
+          <span id="import-drop-text">Drag & drop a <code>figma.json</code> file
+            <br>OR<br> <b>click to browse</b></span>
+          <input type="file" id="import-file-input" accept="application/json,.json" style="display:none" />
+        </div>
+        <div id="import-loading" style="margin-top:0.5rem; color:var(--color-accent); font-size:13px; display:none;">
+          <span class="spinner" style="display:inline-block;width:16px;height:16px;border:2px solid var(--color-accent);border-top:2px solid transparent;border-radius:50%;vertical-align:middle;animation:spin 0.8s linear infinite;margin-right:8px;"></span>
+          Importing...
+        </div>
+    
+        <div id="import-feedback"
+          style="margin-top: 0.5rem; color: var(--color-accent); font-size: 13px; display:none;"></div>
+      </div>
+    </div>
 
-        msg.collections.forEach(col => {
-          const wrapper = document.createElement("label");
-          wrapper.className = "collection-item";
+    <script>
+      const selected = new Set();
 
-          const toggleWrapper = document.createElement("span");
-          toggleWrapper.className = "toggle-wrapper";
-          const input = document.createElement("input");
-          input.type = "checkbox";
-          input.value = col.id;
-          const slider = document.createElement("span");
-          slider.className = "toggle-slider";
+      document.getElementById("tab-export").onclick = () => {
+        document.getElementById("export-tab").classList.add("active");
+        document.getElementById("import-tab").classList.remove("active");
+        document.getElementById("tab-export").classList.add("active");
+        document.getElementById("tab-import").classList.remove("active");
+      };
 
-          input.onchange = () => {
-            input.checked ? selected.add(col.id) : selected.delete(col.id);
-            updateSelectAll();
-          };
+      document.getElementById("tab-import").onclick = () => {
+        document.getElementById("export-tab").classList.remove("active");
+        document.getElementById("import-tab").classList.add("active");
+        document.getElementById("tab-import").classList.add("active");
+        document.getElementById("tab-export").classList.remove("active");
+      };
 
-          toggleWrapper.appendChild(input);
-          toggleWrapper.appendChild(slider);
-          wrapper.appendChild(toggleWrapper);
+      window.onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (msg.type === "collections") {
+          const container = document.getElementById("collections");
+          container.innerHTML = "";
 
-          const label = document.createElement("span");
-          label.textContent = col.name;
-          wrapper.appendChild(label);
+          msg.collections.forEach(col => {
+            const wrapper = document.createElement("label");
+            wrapper.className = "collection-item";
 
-          container.appendChild(wrapper);
-        });
-      }
+            const toggleWrapper = document.createElement("span");
+            toggleWrapper.className = "toggle-wrapper";
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.value = col.id;
+            const slider = document.createElement("span");
+            slider.className = "toggle-slider";
 
-      if (msg.type === "download-css" || msg.type === "download-json") {
-        const blob = new Blob([msg.content], {
-          type: msg.type === "download-json" ? "application/json" : "text/css"
-        });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = msg.type === "download-json" ? "figma.json" : "tailwind-theme.css";
-        a.click();
-      }
-    };
+            input.onchange = () => {
+              input.checked ? selected.add(col.id) : selected.delete(col.id);
+              updateSelectAll();
+            };
 
-    document.getElementById("export-css").onclick = () => {
-      parent.postMessage({
-        pluginMessage: {
-          type: "export-css",
-          selected: Array.from(selected)
+            const label = document.createElement("span");
+            label.textContent = col.name;
+            wrapper.appendChild(label);
+
+            toggleWrapper.appendChild(input);
+            toggleWrapper.appendChild(slider);
+            wrapper.appendChild(toggleWrapper);
+
+            container.appendChild(wrapper);
+          });
         }
-      }, "*");
-    };
 
-    document.getElementById("export-json").onclick = () => {
-      parent.postMessage({
-        pluginMessage: {
-          type: "export-json"
+        if (msg.type === "download-css" || msg.type === "download-json") {
+          const blob = new Blob([msg.content], {
+            type: msg.type === "download-json" ? "application/json" : "text/css"
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = msg.type === "download-json" ? "figma.json" : "tailwind-theme.css";
+          a.click();
         }
-      }, "*");
-    };
+      };
 
-    document.getElementById("selectAll").onchange = (e) => {
-      const checked = e.target.checked;
-      const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
-      boxes.forEach(cb => {
-        cb.checked = checked;
-        checked ? selected.add(cb.value) : selected.delete(cb.value);
-      });
-    };
-
-    function updateSelectAll() {
-      const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
-      const allChecked = Array.from(boxes).every(cb => cb.checked);
-      document.getElementById("selectAll").checked = allChecked;
-    }
-
-    document.getElementById("toggleTheme").onchange = (e) => {
-      const dark = e.target.checked;
-      document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
-    };
-
-    window.onload = () => {
-      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-      document.getElementById("toggleTheme").checked = isDark;
-      parent.postMessage({
-        pluginMessage: {
-          type: "get-collections"
-        }
-      }, "*");
-      setTimeout(() => {
-        const height = document.documentElement.scrollHeight;
+      document.getElementById("export-css").onclick = () => {
         parent.postMessage({
           pluginMessage: {
-            type: "resize",
-            width: 420,
-            height
+            type: "export-css",
+            selected: Array.from(selected)
           }
         }, "*");
-      }, 50);
-    };
-  </script>
+      };
+
+      document.getElementById("export-json").onclick = () => {
+        parent.postMessage({
+          pluginMessage: {
+            type: "export-json",
+            selected: Array.from(selected)
+          }
+        }, "*");
+      };
+
+      document.getElementById("selectAll").onchange = (e) => {
+        const checked = e.target.checked;
+        const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
+        boxes.forEach(cb => {
+          cb.checked = checked;
+          checked ? selected.add(cb.value) : selected.delete(cb.value);
+        });
+      };
+
+      function updateSelectAll() {
+        const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
+        const allChecked = Array.from(boxes).every(cb => cb.checked);
+        document.getElementById("selectAll").checked = allChecked;
+      }
+
+      document.getElementById("toggleTheme").onchange = (e) => {
+        const dark = e.target.checked;
+        document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
+      };
+
+      window.onload = () => {
+        document.getElementById("tab-export").classList.add("active");
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        document.getElementById("toggleTheme").checked = isDark;
+        parent.postMessage({
+          pluginMessage: {
+            type: "get-collections"
+          }
+        }, "*");
+        setTimeout(() => {
+          const height = document.documentElement.scrollHeight;
+          parent.postMessage({
+            pluginMessage: {
+              type: "resize",
+              width: 420,
+              height
+            }
+          }, "*");
+        }, 50);
+      };
+      // --- Import Variables Feature ---
+      const dropArea = document.getElementById("import-drop-area");
+      const fileInput = document.getElementById("import-file-input");
+      const feedback = document.getElementById("import-feedback");
+
+      const loading = document.getElementById("import-loading");
+
+      function showLoading(show) {
+        loading.style.display = show ? "block" : "none";
+      }
+
+      function showFeedback(msg, isError = false) {
+        showLoading(false);
+        feedback.textContent = msg;
+        feedback.style.display = "block";
+        feedback.style.color = isError ? "#ff4d4f" : "var(--color-accent)";
+        setTimeout(() => {
+          feedback.style.display = "none";
+        }, 4000);
+      }
+
+      dropArea.addEventListener("click", () => fileInput.click());
+
+      dropArea.addEventListener("dragover", e => {
+        e.preventDefault();
+        dropArea.style.background = "rgba(255,255,255,0.08)";
+      });
+      dropArea.addEventListener("dragleave", e => {
+        e.preventDefault();
+        dropArea.style.background = "";
+      });
+      dropArea.addEventListener("drop", e => {
+        e.preventDefault();
+        dropArea.style.background = "";
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+          handleImportFile(e.dataTransfer.files[0]);
+        }
+      });
+
+      fileInput.addEventListener("change", e => {
+        if (fileInput.files && fileInput.files[0]) {
+          handleImportFile(fileInput.files[0]);
+        }
+      });
+
+      function handleImportFile(file) {
+        if (!file.name.endsWith(".json")) {
+          showFeedback("Please select a .json file", true);
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const content = e.target.result;
+            // Validate JSON
+            JSON.parse(content);
+            parent.postMessage({
+              pluginMessage: {
+                type: "import-json",
+                content
+              }
+            }, "*");
+            showLoading(true);
+          } catch (err) {
+            showFeedback("Invalid JSON file", true);
+          }
+        };
+        reader.readAsText(file);
+      }
+
+      // Listen for import result feedback and refresh-collections from plugin
+      window.addEventListener("message", event => {
+        const msg = event.data.pluginMessage;
+        if (!msg) return;
+        if (msg.type === "import-feedback") {
+          showFeedback(msg.message, msg.error);
+        }
+        if (msg.type === "refresh-collections") {
+          // Request updated collections from plugin
+          parent.postMessage({
+            pluginMessage: {
+              type: "get-collections"
+            }
+          }, "*");
+        }
+      });
+    </script>
 </body>
 
 </html>
