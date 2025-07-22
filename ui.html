@@ -1,103 +1,229 @@
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="dark">
 
 <head>
-  <meta charset="UTF-8" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Figma Variable Export</title>
   <style>
     :root {
-      --color-primary: #ff7bbf;
-      --color-secondary: #964ec2;
-      --color-dark-1: #7a3a5b;
-      --color-dark-2: #4c2538;
-      --color-bg: #1a1a2e;
+      --color-bg: #ffffff;
+      --color-surface: #f0f0f5;
+      --color-border: #a6b1c2;
+      --color-text: #1e1e2f;
+      --color-muted: #8892b0;
+      --color-accent: #ff69b4;
+      --color-collection-bg: #ffffff;
     }
+
+    :root[data-theme="dark"] {
+      --color-bg: #1e1e2f;
+      --color-surface: #2a2a3f;
+      --color-border: #4b5d7a;
+      --color-text: #f0f0f0;
+      --color-muted: #9aa9c7;
+      --color-accent: #ff69b4;
+      --color-collection-bg: rgba(255, 255, 255, 0.08);
+    }
+
     body {
-      font-family: sans-serif;
+      font-family: 'Inter', sans-serif;
+      background: var(--color-bg);
+      color: var(--color-text);
       margin: 0;
-      background-color: var(--color-bg);
-      color: white;
+      padding: 1rem;
+      font-size: 14px;
+      min-width: 300px;
+      max-width: 100%;
+      box-sizing: border-box;
     }
 
     h3 {
-      margin: 8px 0;
-      color: var(--color-primary);
+      margin: 0 0 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .header {
-      padding: 0.5rem 1rem;
-    }
-
-    .header small {
-      display: block;
-      color: gainsboro;
-      font-size: 0.875rem;
-    }
-
-    .container {
-      max-width: 600px;
-      margin: 0 auto;
-      padding: 1rem;
+    .card {
+      background: var(--color-surface);
+      padding: 0.75rem 0;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
     }
 
     .collection-list {
-      max-height: 300px;
-      overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 8px;
+      overflow-y: auto;
+      padding: 0 0.75rem;
     }
-    
-    .collection-item label {
-      cursor: pointer;
+
+    .collection-item {
+      border: 1px solid transparent;
+      box-sizing: border-box;
+      background: var(--color-collection-bg);
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      padding: 0.75rem 0.75rem;
-      background-color: var(--color-dark-2);
-      border-radius: 0.25rem;
-    }
-
-    .collection-item label:hover {
-      background-color: var(--color-dark-1);
-    }
-
-    button {
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
-      background: var(--color-primary);
-      color: black;
-      border: none;
+      padding: 0.5rem 0.75rem;
       border-radius: 4px;
+      transition: background 0.3s, box-shadow 0.3s;
       cursor: pointer;
     }
 
+    .collection-item:hover {
+      border: 1px solid var(--color-accent);
+      background: var(--color-collection-bg);
+    }
+
+    .toggle-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 40px;
+      height: 22px;
+      flex-shrink: 0;
+    }
+
+    .toggle-wrapper input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #7a8da8;
+      transition: 0.3s;
+      border-radius: 22px;
+    }
+
+    .toggle-slider::before {
+      content: "";
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      top: 3px;
+      background-color: white;
+      transition: 0.3s;
+      border-radius: 50%;
+    }
+
+    .toggle-wrapper input:checked+.toggle-slider {
+      background-color: var(--color-accent);
+    }
+
+    .toggle-wrapper input:checked+.toggle-slider::before {
+      transform: translateX(18px);
+    }
+
+    .actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.75rem 1rem;
+      font-size: 14px;
+      border-radius: 6px;
+      border: 1px solid var(--color-border);
+      background: transparent;
+      color: var(--color-text);
+      text-align: left;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      cursor: pointer;
+      position: relative;
+      transition: border 0.2s, background 0.2s;
+    }
+
     button:hover {
-      background: var(--color-secondary);
-      color: white;
+      border-color: var(--color-accent);
+      background: rgba(255, 255, 255, 0.03);
     }
 
-    input[type="checkbox"] {
+    button::after {
+      content: '⬇';
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 16px;
+      opacity: 0.7;
+    }
+
+    .inline-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: none;
       border: none;
-      transform: scale(1.5);
-      border-radius: 0.025rem;
     }
 
-    input[type="checkbox"]:checked {
-      accent-color: var(--color-primary);
+    .small-label {
+      font-size: 12px;
+      opacity: 0.75;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
     }
   </style>
 </head>
 
 <body>
-  <div class="header">
-    <h3>Figma Tailwind CSS Plugin</h3>
-    <small>Select variable collections to export to Tailwind CSS.</small>
+  <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <div>
+      <h2 style="margin: 4px 0; font-weight: 600; font-size: 18px;">Figma Variable Toolkit</h2>
+      <p style="margin: 0 0; font-weight: 400; font-size: 14px; color: var(--color-muted);">
+        Select collections to export
+      </p>
+    </div>
+    <label class="theme-toggle inline-toggle">
+      <span class="small-label">🌙 Dark Theme</span>
+      <span class="toggle-wrapper">
+        <input type="checkbox" id="toggleTheme" checked>
+        <span class="toggle-slider"></span>
+      </span>
+    </label>
   </div>
-  <div class="container">
-    <div class="collection-list" id="collections"></div>
+
+  <div class="card">
+    <label class="inline-toggle" style="padding: 0 1.5rem;">
+      <span class="toggle-wrapper">
+        <input type="checkbox" id="selectAll">
+        <span class="toggle-slider"></span>
+      </span>
+      <span>Select All</span>
+    </label>
+    <div id="collections" class="collection-list"></div>
   </div>
-  <div class="container">
-    <button id="export">Export to Tailwind CSS</button>
+
+  <div class="actions">
+    <button id="export-css">
+      <div style="font-weight: 600;">🌀 Tailwind v4 CSS</div>
+      <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export to Tailwind v4-compatible CSS
+        file</div>
+    </button>
+    <button id="export-json">
+      <div style="font-weight: 600;">📦 Figma JSON</div>
+      <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export Figma variables to JSON for
+        import</div>
+    </button>
   </div>
 
   <script>
@@ -105,60 +231,106 @@
 
     window.onmessage = (event) => {
       const msg = event.data.pluginMessage;
-
-      if (msg.collections) {
+      if (msg.type === "collections") {
         const container = document.getElementById("collections");
         container.innerHTML = "";
-        msg.collections.forEach(col => {
-          const div = document.createElement("div");
-          div.className = "collection-item";
 
-          const label = document.createElement("label");
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.value = col.id;
-          checkbox.onchange = () => {
-            checkbox.checked ? selected.add(col.id) : selected.delete(col.id);
+        msg.collections.forEach(col => {
+          const wrapper = document.createElement("label");
+          wrapper.className = "collection-item";
+
+          const toggleWrapper = document.createElement("span");
+          toggleWrapper.className = "toggle-wrapper";
+          const input = document.createElement("input");
+          input.type = "checkbox";
+          input.value = col.id;
+          const slider = document.createElement("span");
+          slider.className = "toggle-slider";
+
+          input.onchange = () => {
+            input.checked ? selected.add(col.id) : selected.delete(col.id);
+            updateSelectAll();
           };
 
-          label.appendChild(checkbox);
-          label.appendChild(document.createTextNode(col.name));
-          div.appendChild(label);
-          container.appendChild(div);
+          toggleWrapper.appendChild(input);
+          toggleWrapper.appendChild(slider);
+          wrapper.appendChild(toggleWrapper);
+
+          const label = document.createElement("span");
+          label.textContent = col.name;
+          wrapper.appendChild(label);
+
+          container.appendChild(wrapper);
         });
       }
 
-      if (msg.type === "download-css") {
-        const blob = new Blob([msg.css], {
-          type: "text/css"
+      if (msg.type === "download-css" || msg.type === "download-json") {
+        const blob = new Blob([msg.content], {
+          type: msg.type === "download-json" ? "application/json" : "text/css"
         });
         const url = URL.createObjectURL(blob);
-        document.body.innerHTML = `
-          <div style="padding: 1em; font-family: sans-serif;">
-            <h2>Tailwind CSS Theme</h2>
-            <p>Download your CSS file below:</p>
-            <a href="${url}" download="tailwind-theme.css" style="
-              font-weight: bold;
-              display: inline-block;
-              margin-top: 1em;
-              padding: 0.5rem 1rem;
-              background: #22c55e;
-              color: white;
-              border-radius: 4px;
-              text-decoration: none;
-            ">⬇️ Download tailwind-theme.css</a>
-          </div>
-        `;
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = msg.type === "download-json" ? "figma.json" : "tailwind-theme.css";
+        a.click();
       }
     };
 
-    document.getElementById("export").onclick = () => {
+    document.getElementById("export-css").onclick = () => {
       parent.postMessage({
         pluginMessage: {
-          type: "export",
+          type: "export-css",
           selected: Array.from(selected)
         }
       }, "*");
+    };
+
+    document.getElementById("export-json").onclick = () => {
+      parent.postMessage({
+        pluginMessage: {
+          type: "export-json"
+        }
+      }, "*");
+    };
+
+    document.getElementById("selectAll").onchange = (e) => {
+      const checked = e.target.checked;
+      const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
+      boxes.forEach(cb => {
+        cb.checked = checked;
+        checked ? selected.add(cb.value) : selected.delete(cb.value);
+      });
+    };
+
+    function updateSelectAll() {
+      const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
+      const allChecked = Array.from(boxes).every(cb => cb.checked);
+      document.getElementById("selectAll").checked = allChecked;
+    }
+
+    document.getElementById("toggleTheme").onchange = (e) => {
+      const dark = e.target.checked;
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
+    };
+
+    window.onload = () => {
+      const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+      document.getElementById("toggleTheme").checked = isDark;
+      parent.postMessage({
+        pluginMessage: {
+          type: "get-collections"
+        }
+      }, "*");
+      setTimeout(() => {
+        const height = document.documentElement.scrollHeight;
+        parent.postMessage({
+          pluginMessage: {
+            type: "resize",
+            width: 420,
+            height
+          }
+        }, "*");
+      }, 50);
     };
   </script>
 </body>
