@@ -50,6 +50,12 @@
       gap: 0.75rem;
     }
 
+    .card-header {
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center;
+    }
+
     .collection-list {
       display: flex;
       flex-direction: column;
@@ -254,7 +260,7 @@
     </div>
     <div class="tab active" id="export-tab">
       <div class="card">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="card-header">
           <p style="margin: 0 0.75rem; font-weight: 400; font-size: 14px; color: var(--color-muted);">
             Select collections to export
           </p>
@@ -319,53 +325,6 @@
         document.getElementById("import-tab").classList.add("active");
         document.getElementById("tab-import").classList.add("active");
         document.getElementById("tab-export").classList.remove("active");
-      };
-
-      window.onmessage = (event) => {
-        const msg = event.data.pluginMessage;
-        if (msg.type === "collections") {
-          const container = document.getElementById("collections");
-          container.innerHTML = "";
-
-          msg.collections.forEach(col => {
-            const wrapper = document.createElement("label");
-            wrapper.className = "collection-item";
-
-            const toggleWrapper = document.createElement("span");
-            toggleWrapper.className = "toggle-wrapper";
-            const input = document.createElement("input");
-            input.type = "checkbox";
-            input.value = col.id;
-            const slider = document.createElement("span");
-            slider.className = "toggle-slider";
-
-            input.onchange = () => {
-              input.checked ? selected.add(col.id) : selected.delete(col.id);
-              updateSelectAll();
-            };
-
-            const label = document.createElement("span");
-            label.textContent = col.name;
-            wrapper.appendChild(label);
-
-            toggleWrapper.appendChild(input);
-            toggleWrapper.appendChild(slider);
-            wrapper.appendChild(toggleWrapper);
-
-            container.appendChild(wrapper);
-          });
-        }
-
-        if (msg.type === "download-css" || msg.type === "download-json") {
-          const blob = new Blob([msg.content], {
-            type: msg.type === "download-json" ? "application/json" : "text/css"
-          });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = msg.type === "download-json" ? "figma.json" : "tailwind-theme.css";
-          a.click();
-        }
       };
 
       document.getElementById("export-css").onclick = () => {
@@ -476,6 +435,7 @@
           showFeedback("Please select a .json file", true);
           return;
         }
+        showLoading(true); // <-- Show spinner immediately
         const reader = new FileReader();
         reader.onload = function (e) {
           try {
@@ -488,8 +448,9 @@
                 content
               }
             }, "*");
-            showLoading(true);
+            // Spinner stays on until plugin responds with loading: false
           } catch (err) {
+            showLoading(false); // Hide spinner on error
             showFeedback("Invalid JSON file", true);
           }
         };
@@ -500,16 +461,73 @@
       window.addEventListener("message", event => {
         const msg = event.data.pluginMessage;
         if (!msg) return;
+
+        if (msg.type === "collections") {
+          const container = document.getElementById("collections");
+          container.innerHTML = "";
+
+          const cardHeader = document.querySelector(".card-header");
+          const selectAllToggle = document.getElementById("selectAll").parentElement;
+          const actions = document.querySelector(".actions");
+
+          if (!msg.collections || msg.collections.length === 0) {
+            const emptyMsg = document.createElement("div");
+            emptyMsg.style.padding = "1rem";
+            emptyMsg.style.textAlign = "center";
+            emptyMsg.style.color = "var(--color-muted)";
+            emptyMsg.textContent = "No variable collections or variables exist.";
+            container.appendChild(emptyMsg);
+
+            if (cardHeader) cardHeader.style.display = "none";
+            if (selectAllToggle) selectAllToggle.style.display = "none";
+            if (actions) actions.style.display = "none";
+          } else {
+            if (cardHeader) cardHeader.style.display = "";
+            if (selectAllToggle) selectAllToggle.style.display = "";
+            if (actions) actions.style.display = "";
+
+            msg.collections.forEach(col => {
+              // ...existing code to render each collection...
+            });
+          }
+
+          setTimeout(() => {
+            const height = Math.min(document.documentElement.scrollHeight, 500);
+            parent.postMessage({
+              pluginMessage: {
+                type: "resize",
+                width: 420,
+                height
+              }
+            }, "*");
+          }, 50);
+        }
+
+        if (msg.type === "loading") {
+          showLoading(msg.loading);
+        }
+
         if (msg.type === "import-feedback") {
           showFeedback(msg.message, msg.error);
         }
+
         if (msg.type === "refresh-collections") {
-          // Request updated collections from plugin
           parent.postMessage({
             pluginMessage: {
               type: "get-collections"
             }
           }, "*");
+        }
+
+        if (msg.type === "download-css" || msg.type === "download-json") {
+          const blob = new Blob([msg.content], {
+            type: msg.type === "download-json" ? "application/json" : "text/css"
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = msg.type === "download-json" ? "figma.json" : "tailwind-theme.css";
+          a.click();
         }
       });
     </script>
