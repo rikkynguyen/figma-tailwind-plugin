@@ -127,31 +127,6 @@ figma.ui.onmessage = async function (msg) {
         defaultModeId: c.defaultModeId,
         modes: c.modes
       })),
-      // variables: filteredVariables.map(v => {
-      //   let codeSyntax = null;
-      //   if (v.codeSyntax && typeof v.codeSyntax === "object") {
-      //     const platforms = Object.keys(v.codeSyntax);
-      //     if (platforms.length > 0) {
-      //       codeSyntax = {
-      //         platform: platforms[0],
-      //         syntax: v.codeSyntax[platforms[0]]
-      //       };
-      //     }
-      //   }
-
-      //   return {
-      //     id: v.id,
-      //     name: v.name,
-      //     resolvedType: v.resolvedType,
-      //     variableCollectionId: v.variableCollectionId,
-      //     valuesByMode: v.valuesByMode,
-      //     scopes: v.scopes,
-      //     codeSyntax,
-      //     description: v.description,
-      //     remote: v.remote,
-      //     key: v.key
-      //   };
-      // })
       variables: filteredVariables.map(v => ({
         id: v.id,
         name: v.name,
@@ -233,36 +208,25 @@ figma.ui.onmessage = async function (msg) {
           if (v.scopes && Array.isArray(v.scopes)) {
             try { newVar.scopes = v.scopes; } catch (e) {}
           }
-          console.log("Raw codeSyntax for", v.name, JSON.stringify(v.codeSyntax));
 
-          const rawSyntax = v.codeSyntax;
-          if (typeof rawSyntax === "object" && rawSyntax !== null) {
-            const platformKeys = Object.keys(rawSyntax);
-            for (const key of platformKeys) {
-              const platform = key.toUpperCase();
-              const syntax = rawSyntax[key];
-
-              // ✅ Validate
-              const validPlatforms = ["WEB", "ANDROID", "IOS"];
-              if (validPlatforms.includes(platform) && typeof syntax === "string") {
-                console.log("🧪 Applying codeSyntax for", v.name, { platform, syntax });
-
+          //Add codeSyntax if available
+          // console.log("Raw codeSyntax for", v.name, JSON.stringify(v.codeSyntax));
+          if (v.codeSyntax && typeof v.codeSyntax === "object" && !Array.isArray(v.codeSyntax)) {
+            for (const platformKey in v.codeSyntax) {
+              const syntax = v.codeSyntax[platformKey];
+              if (
+                (platformKey === "WEB" || platformKey === "ANDROID" || platformKey === "iOS") &&
+                typeof syntax === "string"
+              ) {
                 try {
-                  newVar.setVariableCodeSyntax({
-                    platform,  // ✅ plain assignment
-                    syntax
-                  });
+                  console.log(`Applying codeSyntax for ${v.name}`, { platformKey, syntax });
+                  newVar.setVariableCodeSyntax(platformKey, syntax);
                 } catch (e) {
-                  console.warn("❌ Failed to set codeSyntax for", v.name, e);
+                  console.warn(`❌ Failed to set codeSyntax for ${v.name}`, e);
                 }
-              } else {
-                console.warn("⚠️ Invalid codeSyntax entry for", v.name, key, syntax);
               }
             }
           }
-
-
-
 
           if (v.description) {
             try { newVar.description = v.description; } catch (e) {}
