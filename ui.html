@@ -164,6 +164,7 @@
       gap: 0.5rem;
       background: none;
       border: none;
+      cursor: pointer;
     }
 
     .small-label {
@@ -236,6 +237,16 @@
       0% { transform: rotate(0deg); }
       100% { transform: rotate(360deg); }
     }
+
+    input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    input[type="checkbox"]:checked {
+      background-color: var(--color-accent);
+    }
   </style>
 </head>
 
@@ -264,6 +275,7 @@
           <p style="margin: 0 0.75rem; font-weight: 400; font-size: 14px; color: var(--color-muted);">
             Select collections to export
           </p>
+          
           <label class="inline-toggle" style="padding: 0 1.5rem;">
             <span>Select All</span>
             <span class="toggle-wrapper">
@@ -272,6 +284,7 @@
             </span>
           </label>
         </div>
+        
         <div id="collections" class="collection-list"></div>
       </div>
 
@@ -353,6 +366,73 @@
           checked ? selected.add(cb.value) : selected.delete(cb.value);
         });
       };
+
+      function renderCollections(collections, variables) {
+        const container = document.getElementById("collections");
+        container.innerHTML = "";
+
+        const cardHeader = document.querySelector(".card-header");
+        const selectAllToggle = document.getElementById("selectAll").parentElement;
+        const actions = document.querySelector(".actions");
+
+        let filteredCollections = collections;
+
+        if (!filteredCollections || filteredCollections.length === 0) {
+          const emptyMsg = document.createElement("div");
+          emptyMsg.style.padding = "1rem";
+          emptyMsg.style.textAlign = "center";
+          emptyMsg.style.color = "var(--color-muted)";
+          emptyMsg.textContent = "No variable collections or variables exist.";
+          container.appendChild(emptyMsg);
+
+          if (cardHeader) cardHeader.style.display = "none";
+          if (selectAllToggle) selectAllToggle.style.display = "none";
+          if (actions) actions.style.display = "none";
+        } else {
+          if (cardHeader) cardHeader.style.display = "";
+          if (selectAllToggle) selectAllToggle.style.display = "";
+          if (actions) actions.style.display = "";
+
+          filteredCollections.forEach(col => {
+            const wrapper = document.createElement("label");
+            wrapper.className = "collection-item";
+
+            const toggleWrapper = document.createElement("span");
+            toggleWrapper.className = "toggle-wrapper";
+            const input = document.createElement("input");
+            input.type = "checkbox";
+            input.value = col.id;
+            const slider = document.createElement("span");
+            slider.className = "toggle-slider";
+
+            input.onchange = () => {
+              input.checked ? selected.add(col.id) : selected.delete(col.id);
+              updateSelectAll();
+            };
+
+            const label = document.createElement("span");
+            label.textContent = col.name;
+            wrapper.appendChild(label);
+
+            toggleWrapper.appendChild(input);
+            toggleWrapper.appendChild(slider);
+            wrapper.appendChild(toggleWrapper);
+
+            container.appendChild(wrapper);
+          });
+        }
+
+        setTimeout(() => {
+          const height = Math.min(document.documentElement.scrollHeight, 600);
+          parent.postMessage({
+            pluginMessage: {
+              type: "resize",
+              width: 420,
+              height
+            }
+          }, "*");
+        }, 50);
+      }
 
       function updateSelectAll() {
         const boxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
@@ -463,44 +543,7 @@
         if (!msg) return;
 
         if (msg.type === "collections") {
-          const container = document.getElementById("collections");
-          container.innerHTML = "";
-
-          const cardHeader = document.querySelector(".card-header");
-          const selectAllToggle = document.getElementById("selectAll").parentElement;
-          const actions = document.querySelector(".actions");
-
-          if (!msg.collections || msg.collections.length === 0) {
-            const emptyMsg = document.createElement("div");
-            emptyMsg.style.padding = "1rem";
-            emptyMsg.style.textAlign = "center";
-            emptyMsg.style.color = "var(--color-muted)";
-            emptyMsg.textContent = "No variable collections or variables exist.";
-            container.appendChild(emptyMsg);
-
-            if (cardHeader) cardHeader.style.display = "none";
-            if (selectAllToggle) selectAllToggle.style.display = "none";
-            if (actions) actions.style.display = "none";
-          } else {
-            if (cardHeader) cardHeader.style.display = "";
-            if (selectAllToggle) selectAllToggle.style.display = "";
-            if (actions) actions.style.display = "";
-
-            msg.collections.forEach(col => {
-              // ...existing code to render each collection...
-            });
-          }
-
-          setTimeout(() => {
-            const height = Math.min(document.documentElement.scrollHeight, 500);
-            parent.postMessage({
-              pluginMessage: {
-                type: "resize",
-                width: 420,
-                height
-              }
-            }, "*");
-          }, 50);
+          renderCollections(msg.collections, msg.variables);
         }
 
         if (msg.type === "loading") {
