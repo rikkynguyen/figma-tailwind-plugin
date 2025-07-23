@@ -1,7 +1,4 @@
 // Debug: Log Figma plugin environment and variables API
-console.log("[Figma Plugin] figma.variables:", figma.variables);
-console.log("[Figma Plugin] figma.editorType:", figma.editorType);
-console.log("[Figma Plugin] figma.apiVersion:", figma.apiVersion);
 figma.showUI(__html__, { width: 420, height: 500 });
 
 figma.ui.onmessage = async function (msg) {
@@ -107,8 +104,6 @@ figma.ui.onmessage = async function (msg) {
     figma.ui.postMessage({ type: "download-css", content: lines.join("\n") });
   }
 
-
-
   if (msg.type === "export-json") {
     const selectedIds = msg.selected || [];
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
@@ -124,25 +119,29 @@ figma.ui.onmessage = async function (msg) {
       filteredCollections = nonEmptyCollections.filter(c => selectedIds.includes(c.id));
       filteredVariables = variables.filter(v => selectedIds.includes(v.variableCollectionId));
     }
+
     const data = {
-      collections: filteredCollections.map(function (c) {
-        return {
-          id: c.id,
-          name: c.name,
-          defaultModeId: c.defaultModeId,
-          modes: c.modes
-        };
-      }),
-      variables: filteredVariables.map(function (v) {
-        return {
-          id: v.id,
-          name: v.name,
-          resolvedType: v.resolvedType,
-          variableCollectionId: v.variableCollectionId,
-          valuesByMode: v.valuesByMode
-        };
-      })
+      collections: filteredCollections.map(c => ({
+        id: c.id,
+        name: c.name,
+        defaultModeId: c.defaultModeId,
+        modes: c.modes
+      })),
+      variables: filteredVariables.map(v => ({
+        id: v.id,
+        name: v.name,
+        resolvedType: v.resolvedType,
+        variableCollectionId: v.variableCollectionId,
+        valuesByMode: v.valuesByMode,
+        scopes: v.scopes,         // <-- include scopes
+        codeSyntax: v.codeSyntax, // <-- include codeSyntax
+        description: v.description, // <-- include description if available
+        remote: v.remote,           // <-- include remote if available
+        key: v.key                  // <-- include key if available
+        // Add any other properties you want to preserve
+      }))
     };
+
     figma.ui.postMessage({ type: "download-json", content: JSON.stringify(data, null, 2) });
   }
 
@@ -200,11 +199,46 @@ figma.ui.onmessage = async function (msg) {
         const existingVars = await figma.variables.getLocalVariablesAsync();
         const alreadyVar = existingVars.find(x => x.name === v.name && x.variableCollectionId === collectionId);
         let newVar;
+
         if (alreadyVar) {
           newVar = alreadyVar;
         } else {
           newVar = figma.variables.createVariable(v.name, collectionId, v.resolvedType);
+          // Restore extra details if available
+          if (v.scopes && Array.isArray(v.scopes)) {
+            try { newVar.scopes = v.scopes; } catch (e) {}
+          }
+
+          //Add codeSyntax if available
+          // console.log("Raw codeSyntax for", v.name, JSON.stringify(v.codeSyntax));
+          if (v.codeSyntax && typeof v.codeSyntax === "object" && !Array.isArray(v.codeSyntax)) {
+            for (const platformKey in v.codeSyntax) {
+              const syntax = v.codeSyntax[platformKey];
+              if (
+                (platformKey === "WEB" || platformKey === "ANDROID" || platformKey === "iOS") &&
+                typeof syntax === "string"
+              ) {
+                try {
+                  console.log(`Applying codeSyntax for ${v.name}`, { platformKey, syntax });
+                  newVar.setVariableCodeSyntax(platformKey, syntax);
+                } catch (e) {
+                  console.warn(`❌ Failed to set codeSyntax for ${v.name}`, e);
+                }
+              }
+            }
+          }
+
+          if (v.description) {
+            try { newVar.description = v.description; } catch (e) {}
+          }
+          if (v.remote !== undefined) {
+            try { newVar.remote = v.remote; } catch (e) {}
+          }
+          if (v.key) {
+            try { newVar.key = v.key; } catch (e) {}
+          }
         }
+
         variableMap[v.id] = newVar;
       }
 
