@@ -1,8 +1,12 @@
 {
-  "name": "Figma Variable Toolkit",
-  "id": "figma-variable-toolkit",
+  "name": "Variable Toolkit",
+  "id": "1530108945818556020",
   "api": "1.0.0",
   "main": "code.ts",
   "ui": "ui.html",
+  "documentAccess": "dynamic-page",
+  "networkAccess": {
+    "allowedDomains": ["none"]
+  },
   "editorType": ["figma", "dev"]
 }

@@ -2,10 +2,13 @@
 <html lang="en" data-theme="dark">
 
 <head>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Figma Variable Export</title>
+
+  <title>Variable Toolkit</title>
+  <link rel="icon" type="image/x-icon" href="favicon/favicon.ico" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
   <style>
     :root {
       --color-bg: #ffffff;
@@ -15,6 +18,7 @@
       --color-muted: #8892b0;
       --color-accent: #ff69b4;
       --color-collection-bg: #ffffff;
+      --color-toggle-bg: #7a8da8;
     }
 
     :root[data-theme="dark"] {
@@ -104,12 +108,12 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background-color: #7a8da8;
+      background-color: var(--color-toggle-bg);
       transition: 0.3s;
       border-radius: 22px;
     }
 
-    .toggle-slider::before {
+    .toggle-slider::after {
       content: "";
       position: absolute;
       height: 16px;
@@ -125,8 +129,37 @@
       background-color: var(--color-accent);
     }
 
-    .toggle-wrapper input:checked+.toggle-slider::before {
+    .toggle-wrapper input:checked+.toggle-slider::after {
       transform: translateX(18px);
+    }
+
+    .theme-toggle .toggle-wrapper {
+      width: 52px;
+      height: 28px;
+    }
+
+    .theme-toggle .toggle-slider{
+      background-color: var(--color-text);
+    }
+
+    .theme-toggle .toggle-slider::after {
+      content: "🔆";
+      text-align: center;
+      background-color: var(--color-bg);
+      height: 24px;
+      width: 24px;
+      left: 2px;
+      top: 2px;
+      font-size: 1rem !important;
+    }
+
+    .theme-toggle .toggle-wrapper input:checked+.toggle-slider {
+      background-color: white;
+    }
+
+    .theme-toggle .toggle-wrapper input:checked+.toggle-slider::after {
+      content: "🌙";
+      transform: translateX(24px);
     }
 
     .actions {
@@ -252,14 +285,23 @@
 
 <body>
   <div class="header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-    <div>
-      <h2 style="margin: 4px 0; font-weight: 600; font-size: 18px;">Figma Variable Toolkit</h2>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none"
+        style="width: 4rem; height: auto;">
+        <path
+          d="M98 82.2324L96.4062 83.0791L61.4062 101.65L60 102.396L58.5938 101.65L28.8428 85.8643L34.9746 82.3232L60 95.6025L92 78.623V49.083L98 45.6182V82.2324ZM61.4062 18.3496L92.5801 34.8906L86.4492 38.4307L60 24.3965L28 41.376V72.4941L22 75.958V37.7676L23.5938 36.9209L58.5938 18.3496L60 17.6035L61.4062 18.3496ZM60 50C65.5228 50 70 54.4772 70 60C70 65.5228 65.5228 70 60 70C54.4773 69.9998 50 65.5227 50 60C50 54.4773 54.4773 50.0002 60 50Z"
+          fill="#FF69B4" />
+        <path
+          d="M47.7881 64.4671C48.4926 66.3926 49.6412 68.1028 51.1074 69.4789L9.83008 93.2445L6.82422 88.0521L47.7881 64.4671ZM112.453 28.2552L115.344 29.0355L114.575 31.9203L111.444 43.6888L108.541 42.9164L105.639 42.1439L106.914 37.35L72.667 57.0668C72.2026 55.0531 71.2697 53.2193 69.9902 51.6839L103.909 32.1566L99.1064 30.8607L100.668 25.0755L112.453 28.2552Z"
+          fill="#FF69B4" />
+      </svg>
+      <h1 style="margin: 4px 0; font-weight: 400; font-size: 1.5rem;"><strong>VAR</strong>Toolkit</h1>
     </div>
     <label class="theme-toggle inline-toggle">
-      <span class="small-label">🌙 Dark Theme</span>
       <span class="toggle-wrapper">
         <input type="checkbox" id="toggleTheme" checked>
-        <span class="toggle-slider"></span>
+        <span class="toggle-slider" style="display: flex; align-items: center; justify-content: space-between; padding: 0 0.25rem;">
+        </span>
       </span>
     </label>
   </div>
@@ -423,7 +465,7 @@
         }
 
         setTimeout(() => {
-          const height = Math.min(document.documentElement.scrollHeight, 600);
+          const height = Math.min(document.documentElement.scrollHeight, 650);
           parent.postMessage({
             pluginMessage: {
               type: "resize",

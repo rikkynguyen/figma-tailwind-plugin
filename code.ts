@@ -1,5 +1,5 @@
 // Debug: Log Figma plugin environment and variables API
-figma.showUI(__html__, { width: 420, height: 500 });
+figma.showUI(__html__, { width: 420, height: 600 });
 
 figma.ui.onmessage = async function (msg) {
   if (msg.type === "resize") {
