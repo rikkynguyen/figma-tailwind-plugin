@@ -174,7 +174,8 @@ figma.ui.onmessage = async function (msg) {
         } else {
           newCol = figma.variables.createVariableCollection(col.name);
         }
-        collectionMap[col.id] = newCol.id;
+        collectionMap[col.id] = newCol;
+
         // Map old mode IDs to new mode IDs by order
         if (Array.isArray(col.modes) && Array.isArray(newCol.modes)) {
           const map = {};
@@ -203,7 +204,8 @@ figma.ui.onmessage = async function (msg) {
         if (alreadyVar) {
           newVar = alreadyVar;
         } else {
-          newVar = figma.variables.createVariable(v.name, collectionId, v.resolvedType);
+          newVar = figma.variables.createVariable(v.name, collectionMap[oldCollectionId], v.resolvedType);
+
           // Restore extra details if available
           if (v.scopes && Array.isArray(v.scopes)) {
             try { newVar.scopes = v.scopes; } catch (e) {}
