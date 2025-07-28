@@ -1,0 +1,28 @@
+{
+  "name": "figma-tailwind-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "vite build && copy manifest.json dist\\",
+    "watch": "vite build --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rikkynguyen/figma-tailwind-plugin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rikkynguyen/figma-tailwind-plugin/issues"
+  },
+  "homepage": "https://github.com/rikkynguyen/figma-tailwind-plugin#readme",
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.116.0",
+    "typescript": "^5.8.3",
+    "vite": "^4.5.14",
+    "vite-plugin-html-inline": "^0.1.6"
+  }
+}
