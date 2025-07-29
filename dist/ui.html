@@ -55,6 +55,9 @@
 }());
 
 const selected = /* @__PURE__ */ new Set();
+document.getElementById("generate").onclick = () => {
+  parent.postMessage({ pluginMessage: { type: "generate-preset" } }, "*");
+};
 document.getElementById("tab-export").onclick = () => {
   document.getElementById("export-tab").classList.add("active");
   document.getElementById("import-tab").classList.remove("active");
@@ -446,23 +449,41 @@ const style = '';</script>
       padding: 0.75rem 1rem;
       font-size: 14px;
       border-radius: 6px;
-      border: 1px solid var(--color-border);
-      background: transparent;
-      color: var(--color-text);
       text-align: left;
       width: 100%;
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
       gap: 6px;
       cursor: pointer;
       position: relative;
-      transition: border 0.2s, background 0.2s;
+      align-items: center;
+      justify-content: center;
     }
 
     button:hover {
+      fill-opacity: 0.8;
+    }
+    
+    button.btn-export {
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      background: transparent;
+      align-items: flex-start;
+      flex-direction: column;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    button.btn-export:hover {
       border-color: var(--color-accent);
       background: rgba(255, 255, 255, 0.03);
+    }
+
+    button.btn-primary {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
     }
 
     .inline-toggle {
@@ -499,7 +520,7 @@ const style = '';</script>
       gap: 0.25rem;
     }
 
-    .tab-button {
+    button.tab-button {
       font-weight: 600;
       border: none;
       background: none;
@@ -508,10 +529,9 @@ const style = '';</script>
       padding: 0.75rem 1rem;
       border-radius: 4px;
       transition: background 0.2s, color 0.2s;
-      align-items: center;
     }
 
-    .tab-button.active {
+    button.tab-button.active {
       color: var(--color-text);
       background-color: var(--color-accent);
     }
@@ -579,6 +599,8 @@ const style = '';</script>
     </label>
   </div>
 
+  <button id="generate" class="btn-primary">Generate</button>
+
   
     <div class="tab-nav">
       <button id="tab-export" class="tab-button">Export Variables</button>
@@ -604,12 +626,12 @@ const style = '';</script>
       </div>
 
       <div class="actions">
-        <button id="export-css">
+        <button id="export-css" class="btn-export">
           <div style="font-weight: 600;">🌀 Tailwind v4 CSS</div>
           <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export to Tailwind v4-compatible
             CSS file</div>
         </button>
-        <button id="export-json">
+        <button id="export-json" class="btn-export">
           <div style="font-weight: 600;">📦 Figma JSON</div>
           <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export Figma variables to JSON for
             import</div>

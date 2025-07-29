@@ -1,4 +1,4 @@
-{
+export const presetData = {
   "collections": [
     {
       "id": "VariableCollectionId:1:3",

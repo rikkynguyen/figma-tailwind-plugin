@@ -1,5 +1,9 @@
 const selected = new Set();
 
+document.getElementById("generate").onclick = () => {
+  parent.postMessage({ pluginMessage: { type: "generate-preset" } }, "*");
+};
+
 document.getElementById("tab-export").onclick = () => {
   document.getElementById("export-tab").classList.add("active");
   document.getElementById("import-tab").classList.remove("active");

@@ -12,7 +12,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         code: 'code.ts',
-        ui: 'ui.html'
+        ui: 'ui.html',
       },
       output: {
         entryFileNames: '[name].js',

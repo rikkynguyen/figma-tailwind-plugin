@@ -160,23 +160,41 @@
       padding: 0.75rem 1rem;
       font-size: 14px;
       border-radius: 6px;
-      border: 1px solid var(--color-border);
-      background: transparent;
-      color: var(--color-text);
       text-align: left;
       width: 100%;
       display: flex;
-      flex-direction: column;
-      align-items: flex-start;
       gap: 6px;
       cursor: pointer;
       position: relative;
-      transition: border 0.2s, background 0.2s;
+      align-items: center;
+      justify-content: center;
     }
 
     button:hover {
+      fill-opacity: 0.8;
+    }
+    
+    button.btn-export {
+      border: 1px solid var(--color-border);
+      color: var(--color-text);
+      background: transparent;
+      align-items: flex-start;
+      flex-direction: column;
+      transition: all 0.2s;
+      text-align: left;
+    }
+
+    button.btn-export:hover {
       border-color: var(--color-accent);
       background: rgba(255, 255, 255, 0.03);
+    }
+
+    button.btn-primary {
+      background-color: var(--color-accent);
+      color: var(--color-bg);
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
     }
 
     .inline-toggle {
@@ -213,7 +231,7 @@
       gap: 0.25rem;
     }
 
-    .tab-button {
+    button.tab-button {
       font-weight: 600;
       border: none;
       background: none;
@@ -222,10 +240,9 @@
       padding: 0.75rem 1rem;
       border-radius: 4px;
       transition: background 0.2s, color 0.2s;
-      align-items: center;
     }
 
-    .tab-button.active {
+    button.tab-button.active {
       color: var(--color-text);
       background-color: var(--color-accent);
     }

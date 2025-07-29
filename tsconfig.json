@@ -4,10 +4,12 @@
     "module": "ESNext",
     "lib": ["ESNext", "DOM"],
     "jsx": "preserve",
+    "allowJs": true,
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "esModuleInterop": true,
     "strict": true,
     "types": ["@figma/plugin-typings"]
   },
-  "include": ["src", "ui.ts", "code.ts"]
+  "include": ["src", "ui.ts", "code.ts", "preset.js"]
 }
