@@ -12425,196 +12425,48 @@ figma.ui.onmessage = async function(msg) {
     };
     figma.ui.postMessage({ type: "download-json", content: JSON.stringify(data, null, 2) });
   }
-  if (msg.type === "import-json") {
-    try {
-      const json = JSON.parse(msg.content);
-      if (!json || !Array.isArray(json.collections) || !Array.isArray(json.variables)) {
-        figma.notify("Invalid JSON: missing collections or variables array.");
-        figma.ui.postMessage({ type: "import-feedback", message: "Invalid JSON: missing collections or variables array.", error: true });
-        return;
-      }
-      if (!figma.variables || typeof figma.variables.createVariableCollection !== "function") {
-        figma.notify("Figma Variables API not available in this context.");
-        figma.ui.postMessage({ type: "import-feedback", message: "Figma Variables API not available in this context.", error: true });
-        return;
-      }
-      const existingCollections = await figma.variables.getLocalVariableCollectionsAsync();
-      const collectionMap = {};
-      const modeIdMap = {};
-      const generateUniqueName = (name) => {
-        let newName = name;
-        let count = 1;
-        while (existingCollections.some((c) => c.name === newName)) {
-          newName = `${name}-${count++}`;
-        }
-        return newName;
-      };
-      for (var i = 0; i < json.collections.length; i++) {
-        const col = json.collections[i];
-        if (!col.name)
-          continue;
-        const newCol = figma.variables.createVariableCollection(generateUniqueName(col.name));
-        collectionMap[col.id] = newCol;
-        const map = {};
-        for (var k = 0; k < col.modes.length; k++) {
-          const oldMode = col.modes[k];
-          let newModeId;
-          if (k === 0) {
-            const defaultMode = newCol.modes[0];
-            if (defaultMode) {
-              newModeId = defaultMode.modeId;
-              try {
-                newCol.renameMode(newModeId, oldMode.name);
-              } catch (e) {
-                console.warn("Failed to rename mode", oldMode.name, e);
-              }
-            }
-          } else {
-            try {
-              newModeId = newCol.addMode(oldMode.name);
-            } catch (e) {
-              console.warn("❌ Failed to add mode", oldMode.name, e);
-              figma.notify("Cannot add more than one mode. Try using a blank file or upgrade to Figma Professional.");
-              figma.ui.postMessage({
-                type: "import-feedback",
-                message: "Cannot add mode '" + oldMode.name + "'. This may be due to limitations in Figma's free plan or importing into a non-blank file.",
-                error: true
-              });
-            }
-          }
-          if (newModeId) {
-            map[oldMode.modeId] = newModeId;
-          }
-        }
-        modeIdMap[col.id] = map;
-      }
-      const allExistingVars = await figma.variables.getLocalVariablesAsync();
-      const variableMap = {};
-      for (const v of json.variables) {
-        const collection = collectionMap[v.variableCollectionId];
-        if (!collection || !v.name)
-          continue;
-        const already = allExistingVars.find(
-          (x) => x.name === v.name && x.variableCollectionId === collection.id
-        );
-        let newVar;
-        if (already) {
-          newVar = already;
-        } else {
-          newVar = figma.variables.createVariable(v.name, collection, v.resolvedType);
-          if (v.scopes)
-            try {
-              newVar.scopes = v.scopes;
-            } catch (e) {
-            }
-          if (v.description)
-            try {
-              newVar.description = v.description;
-            } catch (e) {
-            }
-          if (v.remote !== void 0)
-            try {
-              newVar.remote = v.remote;
-            } catch (e) {
-            }
-          if (v.key)
-            try {
-              newVar.key = v.key;
-            } catch (e) {
-            }
-          if (v.codeSyntax && typeof v.codeSyntax === "object") {
-            for (const platform of ["WEB", "ANDROID", "iOS"]) {
-              if (v.codeSyntax[platform] && typeof v.codeSyntax[platform] === "string") {
-                try {
-                  newVar.setVariableCodeSyntax(platform, v.codeSyntax[platform]);
-                } catch (err) {
-                  console.warn("Failed to set codeSyntax", platform, v.name, err);
-                }
-              }
-            }
-          }
-        }
-        variableMap[v.id] = newVar;
-      }
-      for (const v of json.variables) {
-        const newVar = variableMap[v.id];
-        const collection = collectionMap[v.variableCollectionId];
-        if (!collection || !newVar)
-          continue;
-        const valueMap = v.valuesByMode || {};
-        for (const oldModeId of Object.keys(valueMap)) {
-          const newModeId = modeIdMap[v.variableCollectionId][oldModeId];
-          if (!newModeId)
-            continue;
-          let val = valueMap[oldModeId];
-          if (val && val.type === "VARIABLE_ALIAS" && val.id) {
-            const targetVar = variableMap[val.id];
-            if (targetVar) {
-              val = {
-                type: "VARIABLE_ALIAS",
-                id: targetVar.id
-              };
-            } else {
-              console.warn("Alias target not found:", val.id);
-              continue;
-            }
-          }
-          try {
-            newVar.setValueForMode(newModeId, val);
-          } catch (e) {
-            console.warn("❌ Failed to set value", newVar.name, "in mode", newModeId, e);
-          }
-        }
-      }
-      figma.notify("Figma variables imported successfully.");
-      figma.ui.postMessage({ type: "import-feedback", message: "Figma variables imported successfully.", error: false });
-      figma.ui.postMessage({ type: "refresh-collections" });
-      figma.ui.postMessage({ type: "loading", loading: false });
-    } catch (e) {
-      console.error(e);
-      figma.notify("Failed to import JSON. " + (e && e.message ? e.message : ""));
-      figma.ui.postMessage({ type: "import-feedback", message: "Failed to import JSON. " + (e && e.message ? e.message : ""), error: true });
-      figma.ui.postMessage({ type: "loading", loading: false });
-    }
-  }
-  if (msg.type === "generate-preset") {
-    const data = presetData;
+  async function applyCollectionsAndVariables(data) {
     const existingCollections = await figma.variables.getLocalVariableCollectionsAsync();
+    const allExistingVars = await figma.variables.getLocalVariablesAsync();
     const collectionMap = {};
     const modeIdMap = {};
-    const generateUniqueName = (name) => {
+    const variableMap = {};
+    function generateUniqueName(name) {
       let newName = name;
       let count = 1;
-      while (existingCollections.some((c) => c.name === newName)) {
-        newName = `${name}-${count++}`;
+      while (existingCollections.some(function(c) {
+        return c.name === newName;
+      })) {
+        newName = name + "-" + count++;
       }
       return newName;
-    };
-    for (const col of data.collections) {
+    }
+    for (var i2 = 0; i2 < data.collections.length; i2++) {
+      var col = data.collections[i2];
       if (!col.name)
         continue;
-      const newCol = figma.variables.createVariableCollection(generateUniqueName(col.name));
+      var newCol = figma.variables.createVariableCollection(generateUniqueName(col.name));
       collectionMap[col.id] = newCol;
-      const map = {};
-      for (let k2 = 0; k2 < col.modes.length; k2++) {
-        const oldMode = col.modes[k2];
-        let newModeId;
-        if (k2 === 0) {
-          const defaultMode = newCol.modes[0];
+      var map = {};
+      for (var k = 0; k < col.modes.length; k++) {
+        var oldMode = col.modes[k];
+        var newModeId;
+        if (k === 0) {
+          var defaultMode = newCol.modes[0];
           if (defaultMode) {
             newModeId = defaultMode.modeId;
             try {
               newCol.renameMode(newModeId, oldMode.name);
             } catch (e) {
-              console.warn("Failed to rename mode", oldMode.name, e);
+              console.warn("⚠️ Failed to rename mode:", oldMode.name, e);
             }
           }
         } else {
           try {
             newModeId = newCol.addMode(oldMode.name);
           } catch (e) {
-            figma.notify(`⚠️ Cannot add mode "${oldMode.name}" — incremental mode or free plan limitation.`);
-            console.warn("Cannot add mode", oldMode.name, e);
+            figma.notify("⚠️ Cannot add mode '" + oldMode.name + "'. Try a blank file or Figma Professional plan.");
+            console.warn("❌ Failed to add mode", oldMode.name, e);
           }
         }
         if (newModeId) {
@@ -12623,14 +12475,15 @@ figma.ui.onmessage = async function(msg) {
       }
       modeIdMap[col.id] = map;
     }
-    const variableMap = {};
-    const allExistingVars = await figma.variables.getLocalVariablesAsync();
-    for (const v of data.variables) {
-      const collection = collectionMap[v.variableCollectionId];
+    for (var j2 = 0; j2 < data.variables.length; j2++) {
+      var v = data.variables[j2];
+      var collection = collectionMap[v.variableCollectionId];
       if (!collection || !v.name)
         continue;
-      const already = allExistingVars.find((x) => x.name === v.name && x.variableCollectionId === collection.id);
-      let newVar;
+      var already = allExistingVars.find(function(x) {
+        return x.name === v.name && x.variableCollectionId === collection.id;
+      });
+      var newVar;
       if (already) {
         newVar = already;
       } else {
@@ -12645,7 +12498,7 @@ figma.ui.onmessage = async function(msg) {
             newVar.description = v.description;
           } catch (e) {
           }
-        if (v.remote !== void 0)
+        if (typeof v.remote !== "undefined")
           try {
             newVar.remote = v.remote;
           } catch (e) {
@@ -12655,13 +12508,15 @@ figma.ui.onmessage = async function(msg) {
             newVar.key = v.key;
           } catch (e) {
           }
-        if (v.codeSyntax && typeof v.codeSyntax === "object") {
-          for (const platform of ["WEB", "ANDROID", "iOS"]) {
-            if (v.codeSyntax[platform]) {
+        if (typeof v.codeSyntax === "object") {
+          var platforms = ["WEB", "ANDROID", "iOS"];
+          for (var p = 0; p < platforms.length; p++) {
+            var platform = platforms[p];
+            if (v.codeSyntax[platform] && typeof v.codeSyntax[platform] === "string") {
               try {
                 newVar.setVariableCodeSyntax(platform, v.codeSyntax[platform]);
               } catch (e) {
-                console.warn("Failed to set codeSyntax", platform, v.name, e);
+                console.warn("Failed to set codeSyntax for", v.name, platform, e);
               }
             }
           }
@@ -12669,28 +12524,56 @@ figma.ui.onmessage = async function(msg) {
       }
       variableMap[v.id] = newVar;
     }
-    for (const v of data.variables) {
-      const newVar = variableMap[v.id];
-      const collection = collectionMap[v.variableCollectionId];
-      if (!collection || !newVar)
+    for (var j2 = 0; j2 < data.variables.length; j2++) {
+      var v = data.variables[j2];
+      var newVar = variableMap[v.id];
+      var collection = collectionMap[v.variableCollectionId];
+      if (!newVar || !collection)
         continue;
-      const valueMap = v.valuesByMode || {};
-      for (const oldModeId in valueMap) {
-        const newModeId = modeIdMap[v.variableCollectionId] && modeIdMap[v.variableCollectionId][oldModeId];
+      var valueMap = v.valuesByMode || {};
+      for (var key in valueMap) {
+        var newModeId = modeIdMap[v.variableCollectionId] && modeIdMap[v.variableCollectionId][key];
         if (!newModeId)
           continue;
-        let val = valueMap[oldModeId];
+        var val = valueMap[key];
         if (val && val.type === "VARIABLE_ALIAS" && val.id && variableMap[val.id]) {
-          val = Object.assign({}, val, { id: variableMap[val.id].id });
+          val = {
+            type: "VARIABLE_ALIAS",
+            id: variableMap[val.id].id
+          };
         }
         try {
           newVar.setValueForMode(newModeId, val);
         } catch (e) {
-          console.warn("Failed to set value", newVar.name, ":", e);
+          console.warn("❌ Failed to set value for", newVar.name, e);
         }
       }
     }
-    figma.notify("✅ Preset variables generated!");
     figma.ui.postMessage({ type: "refresh-collections" });
+  }
+  if (msg.type === "import-json") {
+    try {
+      var json = JSON.parse(msg.content);
+      if (!json || !json.collections || !json.variables)
+        throw new Error("Invalid JSON structure");
+      await applyCollectionsAndVariables(json);
+      figma.notify("✅ Figma variables imported successfully.");
+      figma.ui.postMessage({ type: "import-feedback", message: "Import successful.", error: false });
+      figma.ui.postMessage({ type: "loading", loading: false });
+    } catch (e) {
+      console.error("❌ Import error", e);
+      figma.notify("Failed to import JSON.");
+      figma.ui.postMessage({ type: "import-feedback", message: "Import failed: " + (e.message || ""), error: true });
+      figma.ui.postMessage({ type: "loading", loading: false });
+    }
+  }
+  if (msg.type === "generate-preset") {
+    try {
+      await applyCollectionsAndVariables(presetData);
+      figma.notify("✅ Preset variables generated.");
+    } catch (e) {
+      figma.notify("❌ Failed to generate preset.");
+      console.error(e);
+    }
   }
 };
