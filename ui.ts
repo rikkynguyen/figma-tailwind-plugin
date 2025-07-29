@@ -119,7 +119,22 @@ document.getElementById("toggleTheme").onchange = (e) => {
   document.documentElement.setAttribute("data-theme", dark ? "dark" : "");
 };
 
+// Listen for system theme changes
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+  const isDark = e.matches;
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : '');
+  document.getElementById('toggleTheme').checked = isDark;
+});
+
+
 window.onload = () => {
+  // Set initial theme based on system preference
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  const root = document.documentElement;
+  root.setAttribute('data-theme', prefersDark ? 'dark' : '');
+  document.getElementById('toggleTheme').checked = prefersDark;
+
+
   document.getElementById("tab-export").classList.add("active");
   const isDark = document.documentElement.getAttribute("data-theme") === "dark";
   document.getElementById("toggleTheme").checked = isDark;
