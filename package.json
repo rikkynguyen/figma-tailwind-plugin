@@ -1,11 +1,11 @@
 {
-  "name": "figma-tailwind-plugin",
-  "version": "1.0.0",
-  "description": "",
+  "name": "figma-var-toolkit-plugin",
+  "version": "1.1.0",
+  "description": "A Figma plugin to manage Tailwind CSS variables, allowing users to easily create, edit, and apply Tailwind CSS styles within Figma. This plugin provides a user-friendly interface for managing Tailwind CSS variables, making it easier to maintain design consistency and streamline the design process. It supports features like variable creation, editing, and applying styles directly from the plugin interface. This plugin is designed to enhance the workflow of designers who use Tailwind CSS in their projects, providing a seamless integration between Figma and Tailwind CSS.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "vite build && copy manifest.json dist\\",
+    "dev": "vite",
+    "build": "vite build && cpy manifest.json dist",
     "watch": "vite build --watch"
   },
   "repository": {
@@ -13,7 +13,7 @@
     "url": "git+https://github.com/rikkynguyen/figma-tailwind-plugin.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Rikky Nguyen",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/rikkynguyen/figma-tailwind-plugin/issues"
@@ -21,6 +21,7 @@
   "homepage": "https://github.com/rikkynguyen/figma-tailwind-plugin#readme",
   "devDependencies": {
     "@figma/plugin-typings": "^1.116.0",
+    "cpy-cli": "^4.2.0",
     "typescript": "^5.8.3",
     "vite": "^4.5.14",
     "vite-plugin-html-inline": "^0.1.6"
