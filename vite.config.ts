@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import htmlInline from 'vite-plugin-html-inline';
 
 export default defineConfig({
+  root: '.',
   plugins: [
     htmlInline({
       inline: ['ui.html'], // inline the ui.html file
@@ -9,19 +10,27 @@ export default defineConfig({
     })
   ],
   build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    target: 'esnext',
+    minify: false,
     rollupOptions: {
       input: {
         code: 'code.ts',
-        ui: 'ui.html',
+        ui: "ui.html"
       },
       output: {
         entryFileNames: '[name].js',
         assetFileNames: '[name].[ext]'
       }
     },
-    outDir: 'dist',
-    emptyOutDir: true,
-    target: 'esnext',
-    minify: false
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        // optional: include global variables here
+        additionalData: ''
+      },
+    },
   }
 });

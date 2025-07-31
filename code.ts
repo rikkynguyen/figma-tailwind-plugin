@@ -1,4 +1,4 @@
-import { presetData } from './preset.js';
+import { presetData } from './src/preset.js';
 
 // Debug: Log Figma plugin environment and variables API
 figma.showUI(__html__, { width: 420, height: 600 });
@@ -290,6 +290,8 @@ figma.ui.onmessage = async function (msg) {
       figma.ui.postMessage({ type: "import-feedback", message: "Import failed: " + (e.message || ""), error: true });
       figma.ui.postMessage({ type: "loading", loading: false });
     }
+    figma.ui.postMessage({ type: "refresh-collections" });
+    figma.ui.postMessage({ type: "import-feedback", message: "Import completed", error: false });
   }
 
   if (msg.type === "generate-preset") {
@@ -300,6 +302,9 @@ figma.ui.onmessage = async function (msg) {
       figma.notify("❌ Failed to generate preset.");
       console.error(e);
     }
+
+    figma.ui.postMessage({ type: "generate-feedback", message: "Variables generated successfully." });
+    figma.ui.postMessage({ type: "refresh-collections" });
   }
 
 

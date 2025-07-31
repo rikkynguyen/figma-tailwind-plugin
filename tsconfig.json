@@ -9,7 +9,9 @@
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "strict": true,
-    "types": ["@figma/plugin-typings"]
+    "types": ["@figma/plugin-typings"],
+    "outDir": "dist"
   },
-  "include": ["src", "ui.ts", "code.ts", "preset.js"]
+  "include": ["src", "code.ts"],
+  "exclude": ["node_modules"]
 }

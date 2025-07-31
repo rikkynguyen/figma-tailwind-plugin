@@ -8,7 +8,6 @@
   <title>Variable Toolkit</title>
   <link rel="icon" type="image/x-icon" href="favicon/favicon.ico" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./style.css" />
 </head>
 
 <body>
@@ -38,10 +37,7 @@
   <div id="onboarding" data-page="home">
     <div class="page main">
       <div style="padding: 1rem; text-align: center;">
-        <p style="margin: 0; color: var(--color-muted);">Welcome to the Variable Toolkit!</p>
-        <p style="margin-top: 0.5rem; font-weight: 500;">This tool helps you manage Figma variables for Tailwind CSS.</p>
-      </div>
-      <div style="padding: 1rem; text-align: center;">
+        <p style="margin: 0; font-size: 1rem">Welcome to the Variable Toolkit!</p>
         <p style="margin: 0; color: var(--color-muted);">Select an action to get started:</p>
       </div>
       <button id="btn-generate" class="btn-nav">
@@ -77,9 +73,9 @@
       <h3>Export Variables</h3>
     </div>
     <div class="card">
-      <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem;">
+      <div class="card-header">
         <strong>Select Collections</strong>
-        <label class="inline-toggle">
+        <label class="inline-toggle" style="padding: 0 0.75rem;">
           <span>Select All</span>
           <span class="toggle-wrapper">
             <input type="checkbox" id="selectAll">
@@ -123,69 +119,7 @@
     style="margin-top: 0.5rem; color: var(--color-accent); font-size: 13px; display:none;">
   </div>
 
-  <!-- <button id="generate" class="btn-primary">Generate</button>
-
-  <div class="tabs">
-    <div class="tab-nav">
-      <button id="tab-export" class="tab-button">Export Variables</button>
-      <button id="tab-import" class="tab-button">Import Variables</button>
-    </div>
-    <div class="tab active" id="export-tab">
-      <div class="card">
-        <div class="card-header">
-          <p style="margin: 0 0.75rem; font-weight: 400; font-size: 14px; color: var(--color-muted);">
-            Select collections to export
-          </p>
-          
-          <label class="inline-toggle" style="padding: 0 1.5rem;">
-            <span>Select All</span>
-            <span class="toggle-wrapper">
-              <input type="checkbox" id="selectAll">
-              <span class="toggle-slider"></span>
-            </span>
-          </label>
-        </div>
-        
-        <div id="collections" class="collection-list"></div>
-      </div>
-
-      <div class="actions">
-        <button id="export-css" class="btn-export">
-          <div style="font-weight: 600;">🌀 Tailwind v4 CSS</div>
-          <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export to Tailwind v4-compatible
-            CSS file</div>
-        </button>
-        <button id="export-json" class="btn-export">
-          <div style="font-weight: 600;">📦 Figma JSON</div>
-          <div style="font-size: 12px; font-weight: 400; color: var(--color-muted);">Export Figma variables to JSON for
-            import</div>
-        </button>
-      </div>
-
-    </div>
-
-    <div class="tab" id="import-tab">
-      <div class="card" style="padding: 1rem;">
-        <p style="margin: 0; color: var(--color-muted);">
-          Import Figma JSON file to create variables
-        </p>
-        <div id="import-drop-area" class="drop-area">
-          <span id="import-drop-text">Drag & drop a <code>figma.json</code> file
-            <br>OR<br> <b>click to browse</b></span>
-          <input type="file" id="import-file-input" accept="application/json,.json" style="display:none" />
-        </div>
-        <div id="import-loading" style="margin-top:0.5rem; color:var(--color-accent); font-size:13px; display:none;">
-          <span class="spinner"></span>
-          Importing...
-        </div>
-    
-        <div id="import-feedback"
-          style="margin-top: 0.5rem; color: var(--color-accent); font-size: 13px; display:none;"></div>
-      </div>
-    </div>
-  </div> -->
-
-  <script type="module" src="./ui.ts"></script>
+  <script type="module" src="/src/ui.ts"></script>
 </body>
 
 </html>

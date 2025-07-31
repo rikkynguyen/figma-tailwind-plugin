@@ -8,7 +8,6 @@
   <title>Variable Toolkit</title>
   <link rel="icon" type="image/x-icon" href="favicon/favicon.ico" >
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  
   <script type="module">true&&(function polyfill() {
     const relList = document.createElement('link').relList;
     if (relList && relList.supports && relList.supports('modulepreload')) {
@@ -190,8 +189,10 @@ function setupUI() {
       input.accept = ".json";
       input.onchange = (e) => {
         const file = e.target.files?.[0];
-        if (file)
+        if (file) {
+          showLoading(true);
           readAndSendFile(file);
+        }
       };
       input.click();
     };
@@ -199,6 +200,7 @@ function setupUI() {
   const exportBtn = $("#btn-export");
   if (exportBtn) {
     exportBtn.onclick = () => {
+      showLoading(true);
       showPage("export");
       parent.postMessage({ pluginMessage: { type: "get-collections" } }, "*");
     };
@@ -227,6 +229,11 @@ function setupUI() {
     if (!msg)
       return;
     console.log("Message received from plugin:", msg);
+    if (msg.type === "generate-feedback") {
+      showLoading(false);
+      showFeedback(msg.message || "Done", false);
+      showPage("export");
+    }
     if (msg.type === "collections") {
       renderCollections(msg.collections, msg.variables);
     }
@@ -234,7 +241,9 @@ function setupUI() {
       showLoading(msg.loading);
     }
     if (msg.type === "import-feedback") {
-      showFeedback(msg.message, msg.error);
+      showLoading(false);
+      showFeedback(msg.message || "Import done", msg.error);
+      showPage("export");
     }
     if (msg.type === "refresh-collections") {
       parent.postMessage({ pluginMessage: { type: "get-collections" } }, "*");
@@ -289,24 +298,24 @@ function readAndSendFile(file) {
   reader.readAsText(file);
 }
 setupUI();</script>
-  <style>:root {
+  <style>@charset "UTF-8";
+:root {
   --color-bg: #ffffff;
   --color-surface: #f0f0f5;
   --color-border: #a6b1c2;
   --color-text: #1e1e2f;
   --color-muted: #8892b0;
   --color-accent: #ff69b4;
+  --color-accent-bg: #ff69b430;
   --color-collection-bg: #ffffff;
   --color-toggle-bg: #7a8da8;
 }
-
-:root[data-theme="dark"] {
+:root[data-theme=dark] {
   --color-bg: #1e1e2f;
   --color-surface: #2a2a3f;
   --color-border: #4b5d7a;
   --color-text: #f0f0f0;
   --color-muted: #9aa9c7;
-  --color-accent: #ff69b4;
   --color-collection-bg: rgba(255, 255, 255, 0.08);
 }
 
@@ -319,7 +328,7 @@ setupUI();</script>
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: "Inter", sans-serif;
   background: var(--color-bg);
   color: var(--color-text);
   margin: 0;
@@ -351,6 +360,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 0 0.75rem;
 }
 
 .collection-list {
@@ -418,11 +428,11 @@ body {
   border-radius: 50%;
 }
 
-.toggle-wrapper input:checked+.toggle-slider {
+.toggle-wrapper input:checked + .toggle-slider {
   background-color: var(--color-accent);
 }
 
-.toggle-wrapper input:checked+.toggle-slider::after {
+.toggle-wrapper input:checked + .toggle-slider::after {
   transform: translateX(18px);
 }
 
@@ -446,11 +456,11 @@ body {
   font-size: 1rem !important;
 }
 
-.theme-toggle .toggle-wrapper input:checked+.toggle-slider {
+.theme-toggle .toggle-wrapper input:checked + .toggle-slider {
   background-color: white;
 }
 
-.theme-toggle .toggle-wrapper input:checked+.toggle-slider::after {
+.theme-toggle .toggle-wrapper input:checked + .toggle-slider::after {
   content: "🌙";
   transform: translateX(24px);
 }
@@ -474,16 +484,13 @@ button {
   align-items: center;
   justify-content: center;
 }
-
 button:hover {
   fill-opacity: 0.8;
 }
-
-button.btn-nav,
-button.btn-export {
+button.btn-nav, button.btn-export {
+  background-color: transparent;
   border: 1px solid var(--color-border);
   color: var(--color-text);
-  background: transparent;
   align-items: center;
   justify-content: flex-start;
   flex-direction: row;
@@ -491,13 +498,10 @@ button.btn-export {
   text-align: left;
   gap: 1rem;
 }
-
-button.btn-nav:hover,
-button.btn-export:hover {
+button.btn-nav:hover, button.btn-export:hover {
+  background-color: var(--color-accent-bg);
   border-color: var(--color-accent);
-  background: rgba(255, 255, 255, 0.03);
 }
-
 button.btn-primary {
   background-color: var(--color-accent);
   color: var(--color-bg);
@@ -505,15 +509,17 @@ button.btn-primary {
   border-radius: 6px;
   font-weight: 600;
 }
-
-.btn-text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: 100%;
+button.btn-secondary {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  transition: background-color 0.2s, color 0.2s;
 }
-
-.btn-back {
+button.btn-secondary:hover {
+  background-color: var(--color-accent);
+  color: var(--color-bg);
+}
+button.btn-back {
   background: none;
   border: none;
   color: var(--color-muted);
@@ -523,6 +529,12 @@ button.btn-primary {
   align-items: center;
   gap: 0.5rem;
   width: auto;
+}
+button .btn-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
 }
 
 .icon {
@@ -636,19 +648,17 @@ button.tab-button.active {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
 }
-
-input[type="checkbox"] {
+input[type=checkbox] {
   width: 16px;
   height: 16px;
   cursor: pointer;
 }
 
-input[type="checkbox"]:checked {
+input[type=checkbox]:checked {
   background-color: var(--color-accent);
 }</style>
 </head>
@@ -658,9 +668,11 @@ input[type="checkbox"]:checked {
     <div style="display: flex; align-items: center; gap: 0.5rem;">
       <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" fill="none"
         style="width: 4rem; height: auto;">
-        <path           d="M98 82.2324L96.4062 83.0791L61.4062 101.65L60 102.396L58.5938 101.65L28.8428 85.8643L34.9746 82.3232L60 95.6025L92 78.623V49.083L98 45.6182V82.2324ZM61.4062 18.3496L92.5801 34.8906L86.4492 38.4307L60 24.3965L28 41.376V72.4941L22 75.958V37.7676L23.5938 36.9209L58.5938 18.3496L60 17.6035L61.4062 18.3496ZM60 50C65.5228 50 70 54.4772 70 60C70 65.5228 65.5228 70 60 70C54.4773 69.9998 50 65.5227 50 60C50 54.4773 54.4773 50.0002 60 50Z"
+        <path 
+          d="M98 82.2324L96.4062 83.0791L61.4062 101.65L60 102.396L58.5938 101.65L28.8428 85.8643L34.9746 82.3232L60 95.6025L92 78.623V49.083L98 45.6182V82.2324ZM61.4062 18.3496L92.5801 34.8906L86.4492 38.4307L60 24.3965L28 41.376V72.4941L22 75.958V37.7676L23.5938 36.9209L58.5938 18.3496L60 17.6035L61.4062 18.3496ZM60 50C65.5228 50 70 54.4772 70 60C70 65.5228 65.5228 70 60 70C54.4773 69.9998 50 65.5227 50 60C50 54.4773 54.4773 50.0002 60 50Z"
           fill="#FF69B4" ></path>
-        <path           d="M47.7881 64.4671C48.4926 66.3926 49.6412 68.1028 51.1074 69.4789L9.83008 93.2445L6.82422 88.0521L47.7881 64.4671ZM112.453 28.2552L115.344 29.0355L114.575 31.9203L111.444 43.6888L108.541 42.9164L105.639 42.1439L106.914 37.35L72.667 57.0668C72.2026 55.0531 71.2697 53.2193 69.9902 51.6839L103.909 32.1566L99.1064 30.8607L100.668 25.0755L112.453 28.2552Z"
+        <path 
+          d="M47.7881 64.4671C48.4926 66.3926 49.6412 68.1028 51.1074 69.4789L9.83008 93.2445L6.82422 88.0521L47.7881 64.4671ZM112.453 28.2552L115.344 29.0355L114.575 31.9203L111.444 43.6888L108.541 42.9164L105.639 42.1439L106.914 37.35L72.667 57.0668C72.2026 55.0531 71.2697 53.2193 69.9902 51.6839L103.909 32.1566L99.1064 30.8607L100.668 25.0755L112.453 28.2552Z"
           fill="#FF69B4" ></path>
       </svg>
       <h1 style="margin: 4px 0; font-weight: 400; font-size: 1.5rem;"><strong>VAR</strong>Toolkit</h1>
@@ -678,10 +690,7 @@ input[type="checkbox"]:checked {
   <div id="onboarding" data-page="home">
     <div class="page main">
       <div style="padding: 1rem; text-align: center;">
-        <p style="margin: 0; color: var(--color-muted);">Welcome to the Variable Toolkit!</p>
-        <p style="margin-top: 0.5rem; font-weight: 500;">This tool helps you manage Figma variables for Tailwind CSS.</p>
-      </div>
-      <div style="padding: 1rem; text-align: center;">
+        <p style="margin: 0; font-size: 1rem">Welcome to the Variable Toolkit!</p>
         <p style="margin: 0; color: var(--color-muted);">Select an action to get started:</p>
       </div>
       <button id="btn-generate" class="btn-nav">
@@ -717,9 +726,9 @@ input[type="checkbox"]:checked {
       <h3>Export Variables</h3>
     </div>
     <div class="card">
-      <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; padding: 0 1.5rem;">
+      <div class="card-header">
         <strong>Select Collections</strong>
-        <label class="inline-toggle">
+        <label class="inline-toggle" style="padding: 0 0.75rem;">
           <span>Select All</span>
           <span class="toggle-wrapper">
             <input type="checkbox" id="selectAll">
@@ -762,8 +771,6 @@ input[type="checkbox"]:checked {
   <div id="import-feedback"
     style="margin-top: 0.5rem; color: var(--color-accent); font-size: 13px; display:none;">
   </div>
-
-  
 
   
 </body>

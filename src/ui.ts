@@ -1,3 +1,5 @@
+import './style.scss';
+
 function $(selector: string): HTMLElement | null {
   if (selector.startsWith('#')) {
     return document.getElementById(selector.slice(1));
@@ -149,15 +151,20 @@ function setupUI() {
       input.accept = '.json';
       input.onchange = e => {
         const file = (e.target as HTMLInputElement).files?.[0];
-        if (file) readAndSendFile(file);
+        if (file) {
+          showLoading(true);
+          readAndSendFile(file); // let it trigger import
+        }
       };
       input.click();
     };
   }
 
+
   const exportBtn = $("#btn-export");
   if (exportBtn) {
     exportBtn.onclick = () => {
+      showLoading(true);
       showPage('export');
       parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
     };
@@ -192,6 +199,11 @@ function setupUI() {
 
     console.log("Message received from plugin:", msg);
 
+    if (msg.type === "generate-feedback") {
+      showLoading(false);
+      showFeedback(msg.message || "Done", false);
+      showPage('export'); // switch to export view now that new variables are ready
+    }
     if (msg.type === "collections") {
       renderCollections(msg.collections, msg.variables);
     }
@@ -199,7 +211,9 @@ function setupUI() {
       showLoading(msg.loading);
     }
     if (msg.type === "import-feedback") {
-      showFeedback(msg.message, msg.error);
+      showLoading(false);
+      showFeedback(msg.message || "Import done", msg.error);
+      showPage('export');
     }
     if (msg.type === "refresh-collections") {
       parent.postMessage({ pluginMessage: { type: "get-collections" } }, "*");
