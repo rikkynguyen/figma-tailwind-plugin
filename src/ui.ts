@@ -1,5 +1,7 @@
 import './style.scss';
 
+const selected = new Set();
+
 function $(selector: string): HTMLElement | null {
   if (selector.startsWith('#')) {
     return document.getElementById(selector.slice(1));
@@ -14,14 +16,6 @@ function showPage(id: string) {
   pages.forEach(p => p.setAttribute('hidden', 'true'));
   const target = document.querySelector(`[data-page="${id}"]`);
   if (target) target.removeAttribute('hidden');
-}
-
-function show(el: HTMLElement | null) {
-  if (el) el.style.display = "";
-}
-
-function hide(el: HTMLElement | null) {
-  if (el) el.style.display = "none";
 }
 
 function showLoading(isLoading: boolean) {
@@ -170,11 +164,56 @@ function setupUI() {
     };
   }
 
+  const exportCss = $("#export-css");
+  if (exportCss) {
+    exportCss.onclick = () => {
+      parent.postMessage({
+        pluginMessage: {
+          type: "export-css",
+          selected: Array.from(selected)
+        }
+      }, "*");
+    };
+  }
+
+  const exportJson = $("#export-json");
+  if (exportJson) {
+    exportJson.onclick = () => {
+      parent.postMessage({
+        pluginMessage: {
+          type: "export-json",
+          selected: Array.from(selected)
+        }
+      }, "*");
+    };
+  }
+
   const generateBtn = $("#btn-generate");
   if (generateBtn) {
     generateBtn.onclick = () => {
+      showPage('generate'); // go to the generate page
+      parent.postMessage({ pluginMessage: { type: 'get-collections' } }, '*');
+    };
+  }
+
+  const generateConfirm = $("#btn-generate-confirm");
+  if (generateConfirm) {
+    generateConfirm.onclick = () => {
       showLoading(true);
-      parent.postMessage({ pluginMessage: { type: 'generate-preset' } }, '*');
+
+      const selectedIds: string[] = [];
+      const checkboxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
+      checkboxes.forEach(cb => {
+        const input = cb as HTMLInputElement;
+        if (input.checked) selectedIds.push(input.value);
+      });
+
+      parent.postMessage({
+        pluginMessage: {
+          type: "generate-preset",
+          selected: selectedIds
+        }
+      }, "*");
     };
   }
 
@@ -183,11 +222,15 @@ function setupUI() {
     backBtn.onclick = () => showPage('home');
   }
 
-  const selectAll = $("#selectAll");
+  const selectAll = $("#selectAll") as HTMLInputElement;
   if (selectAll) {
     selectAll.onchange = () => {
       const checkboxes = document.querySelectorAll("#collections .collection-item input[type=checkbox]");
-      checkboxes.forEach(cb => (cb as HTMLInputElement).checked = selectAll.checked);
+      checkboxes.forEach(cb => {
+        const input = cb as HTMLInputElement;
+        input.checked = selectAll.checked;
+        input.checked ? selected.add(input.value) : selected.delete(input.value);
+      });
     };
   }
 
