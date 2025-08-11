@@ -23,9 +23,11 @@
   "devDependencies": {
     "@figma/plugin-typings": "^1.116.0",
     "cpy-cli": "^4.2.0",
-    "sass": "^1.89.2",
     "typescript": "^5.8.3",
     "vite": "^4.5.14",
     "vite-plugin-html-inline": "^0.1.6"
+  },
+  "dependencies": {
+    "sass": "^1.89.2"
   }
 }

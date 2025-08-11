@@ -12304,6 +12304,10 @@ figma.ui.onmessage = async function(msg) {
   if (msg.type === "resize") {
     figma.ui.resize(msg.width, msg.height);
   }
+  if (msg.type === "get-preset-collections") {
+    const collections = presetData && presetData.collections || [];
+    figma.ui.postMessage({ type: "preset-collections", collections });
+  }
   if (msg.type === "get-collections") {
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
     const variables = await figma.variables.getLocalVariablesAsync();
@@ -12571,7 +12575,20 @@ figma.ui.onmessage = async function(msg) {
   }
   if (msg.type === "generate-preset") {
     try {
-      await applyCollectionsAndVariables(presetData);
+      const selectedIds = msg.selected || [];
+      const includeDarkMode = msg.includeDarkMode === true;
+      const filteredPreset = JSON.parse(JSON.stringify(presetData));
+      filteredPreset.collections = filteredPreset.collections.filter(
+        (col) => selectedIds.includes(col.id)
+      );
+      if (!includeDarkMode) {
+        filteredPreset.collections.forEach((col) => {
+          col.modes = col.modes.filter(
+            (mode) => mode.name.toLowerCase().includes("dark") ? false : true
+          );
+        });
+      }
+      await applyCollectionsAndVariables(filteredPreset);
       figma.notify("✅ Preset variables generated.");
     } catch (e) {
       figma.notify("❌ Failed to generate preset.");

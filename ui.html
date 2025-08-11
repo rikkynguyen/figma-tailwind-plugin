@@ -66,16 +66,57 @@
     </div>
   </div>
 
+  <!-- Generate Screen -->
+  <div class="page generate-page" data-page="generate" hidden>
+    <div class="page-header">
+      <button class="btn-back"><span class="icon">←</span></button>
+      <h3>Generate Variables</h3>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <strong>Select Preset Collections</strong>
+        <label class="inline-toggle">
+          <span>Select All</span>
+          <span class="toggle-wrapper">
+            <input type="checkbox" id="selectAllGenerate">
+            <span class="toggle-slider"></span>
+          </span>
+        </label>
+      </div>
+      <div id="generate-collections" class="collection-list"></div>
+    </div>
+
+    <div class="card" style="margin-top: 1rem;">
+      <label class="inline-toggle" style="justify-content: space-between; padding-right: 1.5rem;">
+        <span>Generate Dark Mode</span>
+        <span class="toggle-wrapper">
+          <input type="checkbox" id="generate-darkmode">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+    </div>
+
+    <div class="actions" id="generate-actions">
+      <button id="btn-generate-confirm" class="btn-export">
+        <span class="icon">✨</span>
+        <div class="btn-text">
+          <div style="font-weight: 600;">Generate Selected</div>
+          <div class="small-label">Generate selected collections into Figma</div>
+        </div>
+      </button>
+    </div>
+  </div>
+
   <!-- Export Screen -->
   <div class="page export-page" data-page="export" hidden>
     <div class="page-header">
-      <button id="btn-back" class="btn-back"><span class="icon">←</span></button>
+      <button class="btn-back"><span class="icon">←</span></button>
       <h3>Export Variables</h3>
     </div>
     <div class="card">
       <div class="card-header">
         <strong>Select Collections</strong>
-        <label class="inline-toggle" style="padding: 0 0.75rem;">
+        <label class="inline-toggle">
           <span>Select All</span>
           <span class="toggle-wrapper">
             <input type="checkbox" id="selectAll">

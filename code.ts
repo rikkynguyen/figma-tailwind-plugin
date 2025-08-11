@@ -8,6 +8,12 @@ figma.ui.onmessage = async function (msg) {
     figma.ui.resize(msg.width, msg.height);
   }
 
+  if (msg.type === "get-preset-collections") {
+    const collections = (presetData && presetData.collections) || [];
+    figma.ui.postMessage({ type: "preset-collections", collections });
+  }
+
+
   if (msg.type === "get-collections") {
     // Always fetch the latest collections and variables
     const collections = await figma.variables.getLocalVariableCollectionsAsync();
@@ -296,7 +302,30 @@ figma.ui.onmessage = async function (msg) {
 
   if (msg.type === "generate-preset") {
     try {
-      await applyCollectionsAndVariables(presetData);
+      // Ensure we have selection from UI
+      const selectedIds: string[] = msg.selected || [];
+      const includeDarkMode: boolean = msg.includeDarkMode === true;
+
+      // Clone presetData to avoid modifying original
+      const filteredPreset = JSON.parse(JSON.stringify(presetData));
+
+      // Keep only selected collections
+      filteredPreset.collections = filteredPreset.collections.filter((col: any) =>
+        selectedIds.includes(col.id)
+      );
+
+      // If dark mode is not selected, remove dark mode from modes list
+      if (!includeDarkMode) {
+        filteredPreset.collections.forEach((col: any) => {
+          col.modes = col.modes.filter((mode: any) =>
+            mode.name.toLowerCase().includes("dark") ? false : true
+          );
+        });
+      }
+
+      // Apply filtered preset
+      await applyCollectionsAndVariables(filteredPreset);
+
       figma.notify("✅ Preset variables generated.");
     } catch (e) {
       figma.notify("❌ Failed to generate preset.");
